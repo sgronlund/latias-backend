@@ -1,0 +1,16 @@
+src/server/.db-journal
+node_modules/**/*
+src/node_modules/**/*
+src/.expo/*
+src/.vscode/*
+npm-debug.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# macOS
+.DS_Store
