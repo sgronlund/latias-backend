@@ -1,5 +1,3 @@
-const { google } = require('googleapis');
-
 var app = require('express')('192.168.1.150');
 
 const Database = require('better-sqlite3');
