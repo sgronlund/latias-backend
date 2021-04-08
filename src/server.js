@@ -69,3 +69,12 @@ function clientLogin(username, password) {
 
     return user !== undefined;
 }
+
+function addQuestion(question, answers) {
+    if(answers.length !== 4) return;
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question varchar(255), A1 varchar(255), A2 varchar(255), A3 varchar(255), A4 varchar(255))');
+    table.run();
+
+    const addQuestion = db.prepare('INSERT INTO questions (question, A1, A2, A3, A4) VALUES (?, ?, ?, ?, ?)');
+    addQuestion.run(question, answers[0], answers[1], answers[2], answers[3]);
+}
