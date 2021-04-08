@@ -21,20 +21,25 @@ http.listen(PORT, () => {
     console.log(`listening on *:${PORT}`);
 });
 
-
 /// Determines the behaviour for when a client connects to our socket.
 client.on('connection', (socket) => {
     console.log("new client connected");
     socket.emit('connection');
-    // If the socket receives submit from a client, add submitted
-    // username and password to the database
-    socket.on('register', (username, password) => {clientRegister(username, password);});
+    socket.on('register', (username, password) => {
+        if(clientRegister(username, password)) {
+            socket.emit('registerSuccess');
+            console.log("Register successful");
+        } else {
+            socket.emit('registerFailure');
+            console.log("Register failed");
+        }
+    });
     socket.on('login', (username, password) => {
         if(clientLogin(username, password)) {
-            socket.emit('success');
+            socket.emit('loginSuccess');
             console.log("Login successful");
         } else {
-            socket.emit('failure');
+            socket.emit('loginFailure');
             console.log("Login failed");
         }
     });
@@ -47,10 +52,12 @@ function clientRegister(username, password) {
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ?');
     var user = checkUser.get(username);
 
-    if(user !== undefined) {return console.log("\nUsername is busy!")}
-    
+    if(user !== undefined) return false; //If username is busy, return false
+
     const addUser = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
     addUser.run(username, password);
+
+    return true;
 }
 
 function clientLogin(username, password) {
