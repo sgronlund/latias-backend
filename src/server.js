@@ -25,8 +25,8 @@ http.listen(PORT, () => {
 client.on('connection', (socket) => {
     console.log("new client connected");
     socket.emit('connection');
-    socket.on('register', (username, password) => {
-        if(clientRegister(username, password)) {
+    socket.on('register', (username, password, email) => {
+        if(clientRegister(username, password, email)) {
             socket.emit('registerSuccess');
             console.log("Register successful");
         } else {
@@ -45,17 +45,17 @@ client.on('connection', (socket) => {
     });
 });
 
-function clientRegister(username, password) {
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255))');
+function clientRegister(username, password, email) {
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255), email varchar(255))');
     table.run();
 
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ?');
-    var user = checkUser.get(username);
+    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
+    var user = checkUser.get(username, email);
 
     if(user !== undefined) return false; //If username is busy, return false
 
-    const addUser = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-    addUser.run(username, password);
+    const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)');
+    addUser.run(username, password, email);
 
     return true;
 }
