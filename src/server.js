@@ -1,4 +1,5 @@
 var app = require('express')('192.168.1.150');
+var nodemailer = require('nodemailer');
 
 const Database = require('better-sqlite3');
 const db = new Database('database.db', { verbose: console.log });
@@ -25,8 +26,8 @@ http.listen(PORT, () => {
 client.on('connection', (socket) => {
     console.log("new client connected");
     socket.emit('connection');
-    socket.on('register', (username, password) => {
-        if(clientRegister(username, password)) {
+    socket.on('register', (username, password, email) => {
+        if(clientRegister(username, password, email)) {
             socket.emit('registerSuccess');
             console.log("Register successful");
         } else {
@@ -45,17 +46,17 @@ client.on('connection', (socket) => {
     });
 });
 
-function clientRegister(username, password) {
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255))');
+function clientRegister(username, password, email) {
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255), email varchar(255))');
     table.run();
 
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ?');
-    var user = checkUser.get(username);
+    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
+    var user = checkUser.get(username, email);
 
     if(user !== undefined) return false; //If username is busy, return false
 
-    const addUser = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-    addUser.run(username, password);
+    const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)');
+    addUser.run(username, password, email);
 
     return true;
 }
@@ -77,4 +78,30 @@ function addQuestion(question, answers) {
 
     const addQuestion = db.prepare('INSERT INTO questions (question, A1, A2, A3, A4) VALUES (?, ?, ?, ?, ?)');
     addQuestion.run(question, answers[0], answers[1], answers[2], answers[3]);
+}
+
+
+function sendMail(code) {
+    var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'TheRealDeal.reset@gmail.com',
+          pass: 'Brf5mBLxAw5LZg2h'
+        }
+      });
+      
+      var mailOptions = {
+        from: 'TheRealDeal.reset@gmail.com',
+        to: 'jakob.paulsson123@gmail.com', //Plz don't spam me
+        subject: 'Password Reset',
+        text: code
+      };
+      
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
 }
