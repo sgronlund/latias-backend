@@ -44,6 +44,33 @@ client.on('connection', (socket) => {
             console.log("Login failed");
         }
     });
+    
+    //TODO måste ha unika private och public keys för varje client. 
+    /*
+        var clients = [];
+        var private_keys = [];
+        var public_keys = [];
+
+        Dessa måste pushas med ny info direkt när en ny client connectar.
+
+        Möjligt problem med detta är att vi connectar så ofta, typ varje gång vi gör nånting. Vet inte 
+        hur socket beter sig när man connectar två gånger från samma client men olika sockets
+    */
+
+    socket.on('start-key-exchange', () => {
+        var server_private_key = 4204201337; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+        var server_public_key = 69420691337;
+        var g = 2579;
+        var p = 5159;
+        client.to(socket.id).emit('server-public', server_public_key, g, p);
+    });
+    socket.on('client-public',(client_public_key) => {
+        var server_private_key = 4204201337; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+        var server_public_key = 69420691337;
+        var g = 2579;
+        var p = 5159;
+        var shared_key = (client_public_key**server_private_key) % p;
+    });
 });
 
 function clientRegister(username, password, email) {
