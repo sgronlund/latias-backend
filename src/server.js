@@ -1,4 +1,4 @@
-var app = require('express')('192.168.1.150');
+var app = require('express')('192.168.1.');
 var nodemailer = require('nodemailer');
 
 const Database = require('better-sqlite3');
@@ -24,7 +24,7 @@ http.listen(PORT, () => {
 
 /// Determines the behaviour for when a client connects to our socket.
 client.on('connection', (socket) => {
-    console.log("new client connected");
+    console.log("new client connected " + socket.id);
     socket.emit('connection');
     socket.on('register', (username, password, email) => {
         if(clientRegister(username, password, email)) {
@@ -62,7 +62,7 @@ client.on('connection', (socket) => {
         var server_public_key = 69420691337;
         var g = 2579;
         var p = 5159;
-        client.to(socket.id).emit('server-public', server_public_key, g, p);
+        client.emit('server-public', server_public_key, g, p);
     });
     socket.on('client-public',(client_public_key) => {
         var server_private_key = 4204201337; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
@@ -70,11 +70,12 @@ client.on('connection', (socket) => {
         var g = 2579;
         var p = 5159;
         var shared_key = (client_public_key**server_private_key) % p;
+        console.log("SHARED = " + shared_key);
     });
 });
 
 function clientRegister(username, password, email) {
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255), email varchar(255))');
+    const table = db.prepare('CREATE TABLE users (username varchar(255), password varchar(255), email varchar(255))');
     table.run();
 
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
