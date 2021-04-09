@@ -1,4 +1,4 @@
-var app = require('express')('192.168.1.');
+var app = require('express')('192.168.0.104');
 var nodemailer = require('nodemailer');
 
 const Database = require('better-sqlite3');
@@ -58,42 +58,43 @@ client.on('connection', (socket) => {
     */
 
     socket.on('start-key-exchange', () => {
-        var server_private_key = 4204201337; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-        var server_public_key = 69420691337;
-        var g = 2579;
-        var p = 5159;
+        console.log("login funkade, skaffa keys")
+        var server_private_key = 3; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+        var g = 2579; //TODO: Change me
+        var p = 5159; //TODO: Change me
+        var server_public_key = (g**server_private_key) % p;
         client.emit('server-public', server_public_key, g, p);
     });
     socket.on('client-public',(client_public_key) => {
-        var server_private_key = 4204201337; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-        var server_public_key = 69420691337;
-        var g = 2579;
-        var p = 5159;
+        var server_private_key = 3; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+        
+        var g = 2579; //TODO: Change me
+        var p = 5159; //TODO: Change me
+        var server_public_key = (g**server_private_key) % p;
         var shared_key = (client_public_key**server_private_key) % p;
         console.log("SHARED = " + shared_key);
     });
 });
 
 function clientRegister(username, password, email) {
-    const table = db.prepare('CREATE TABLE users (username varchar(255), password varchar(255), email varchar(255))');
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS login (username varchar(255), password varchar(255), email varchar(255))');
     table.run();
 
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
+    const checkUser = db.prepare('SELECT * FROM login WHERE username = ? OR email = ?');
     var user = checkUser.get(username, email);
 
     if(user !== undefined) return false; //If username is busy, return false
 
-    const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)');
+    const addUser = db.prepare('INSERT INTO login (username, password, email) VALUES (?, ?, ?)');
     addUser.run(username, password, email);
 
     return true;
 }
 
 function clientLogin(username, password) {
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255))');
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS login (username varchar(255), password varchar(255), email varchar(255))');
     table.run();
-
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
+    const checkUser = db.prepare('SELECT * FROM login WHERE username = ? AND password = ?');
     var user = checkUser.get(username, password);
 
     return user !== undefined;
