@@ -6,7 +6,7 @@ The frontend and all its functionality are located [here](https://github.com/sgr
 
 When you've successfully cloned this repo, enter the src folder and run the following command :
 ```
-npm ci
+npm install
 ``` 
 This installs all the dependencies this project requires.
 This process should not differ from MacOS, Linux or Windows assuming you've succesfully installed NodeJS on your host machine.
