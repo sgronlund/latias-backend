@@ -1,4 +1,4 @@
-var app = require('express')('192.168.1.150');
+var app = require('express')();
 var nodemailer = require('nodemailer');
 
 const Database = require('better-sqlite3');
@@ -27,27 +27,32 @@ client.on('connection', (socket) => {
     console.log("new client connected");
     socket.emit('connection');
     socket.on('register', (username, password, email) => {
-        if(clientRegister(username, password, email)) {
-            socket.emit('registerSuccess');
-            console.log("Register successful");
-        } else {
-            socket.emit('registerFailure');
-            console.log("Register failed");
-        }
+        if(clientRegister(username, password, email)) socket.emit('registerSuccess');
+        else socket.emit('registerFailure');
     });
     socket.on('login', (username, password) => {
-        if(clientLogin(username, password)) {
-            socket.emit('loginSuccess');
-            console.log("Login successful");
-        } else {
-            socket.emit('loginFailure');
-            console.log("Login failed");
-        }
+        if(clientLogin(username, password)) socket.emit('loginSuccess');
+        else socket.emit('loginFailure');
     });
+    socket.on('resetPass', (email) => {
+        if(checkMail(email)) { 
+            var code = generateCode(8);
+            insertCode(code, email);
+            sendMail(code, email);
+            socket.emit('emailSuccess');
+        } else {
+            socket.emit('emailFailure');       
+        }
+    })
+    socket.on('submitCode', (code, email) => {
+        if(checkCode(code, email)) socket.emit('codeSuccess');
+        else socket.emit('codeFailure');
+    })
+    socket.on('updatePass', (email, password) => {updatePassword(password, email)})
 });
 
 function clientRegister(username, password, email) {
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255), email varchar(255))');
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
     table.run();
 
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
@@ -55,16 +60,13 @@ function clientRegister(username, password, email) {
 
     if(user !== undefined) return false; //If username is busy, return false
 
-    const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)');
+    const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)'); //resetcode not generated yet
     addUser.run(username, password, email);
 
     return true;
 }
 
 function clientLogin(username, password) {
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255))');
-    table.run();
-
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
     var user = checkUser.get(username, password);
 
@@ -81,7 +83,7 @@ function addQuestion(question, answers) {
 }
 
 
-function sendMail(code) {
+function sendMail(code, email) {
     var transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -92,16 +94,46 @@ function sendMail(code) {
       
       var mailOptions = {
         from: 'TheRealDeal.reset@gmail.com',
-        to: 'jakob.paulsson123@gmail.com', //Plz don't spam me
+        to: email,
         subject: 'Password Reset',
         text: code
       };
       
-      transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-          console.log(error);
-        } else {
-          console.log('Email sent: ' + info.response);
-        }
+      transporter.sendMail(mailOptions, (error, info) => {
+            if (error) console.log(error);
+            else console.log(info);
       });
+}
+
+function generateCode(length) {
+    const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for ( let i = 0; i < length; i++ ) {
+        //Might give non integer value, so we floor the value
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+
+    return result;
+}
+
+function insertCode(code, email) {
+    const insertCode = db.prepare(`UPDATE users SET resetcode = ? WHERE email = ?`);
+    insertCode.run(code, email);
+}
+
+function checkCode(code, email) {
+    const checkCode = db.prepare(`SELECT * FROM users WHERE resetcode = ? AND email = ?`);
+    var user = checkCode.get(code, email);
+    return user !== undefined;
+}
+
+function updatePassword(password, email) {
+    const updatePassword = db.prepare(`UPDATE users SET password = ? WHERE email = ?`);
+    updatePassword.run(password, email);
+}
+
+function checkMail(email) {
+    const checkMail = db.prepare(`SELECT * FROM users WHERE email = ?`);
+    var mail = checkMail.get(email);
+    return mail !== undefined;
 }
