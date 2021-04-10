@@ -52,6 +52,7 @@ client.on('connection', (socket) => {
 });
 
 function clientRegister(username, password, email) {
+    //This should only be necessary while testing as the table SHOULD exist already
     const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
     table.run();
 
@@ -96,7 +97,7 @@ function sendMail(code, email) {
         from: 'TheRealDeal.reset@gmail.com',
         to: email,
         subject: 'Password Reset',
-        text: code
+        text: `Hello!\n\nWe wanted to let you know that your password in the Real Deal has been reset.\nHere is your reset code: ${code}\nIf you did not perform this action, please reset your password in the Real Deal application.`
       };
       
       transporter.sendMail(mailOptions, (error, info) => {
