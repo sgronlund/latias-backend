@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --silent",
+    "test": "jest",
     "start": "node server.js"
+  },
+  "jest": {
+    "verbose" : true
   },
   "repository": {
     "type": "git",

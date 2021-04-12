@@ -53,23 +53,28 @@ function main() {
     });
 }
 function clientRegister(username, password, email, db) {
-    //This should only be necessary while testing as the table SHOULD exist already
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
-    table.run();
+    if (username && password && email ) {
+        //This should only be necessary while testing as the table SHOULD exist already
+        const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username TINYTEXT, password TINYTEXT, email TINYTEXT, resetcode TINYTEXT, points INT)');
+        table.run();
 
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
-    var user = checkUser.get(username, email);
+        const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
+        var user = checkUser.get(username, email);
 
-    if(user !== undefined) return false; //If username is busy, return false
+        if(user !== undefined) return false; //If username is busy, return false
 
-    const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)'); //resetcode not generated yet
-    addUser.run(username, password, email);
+        const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)'); //resetcode not generated yet
+        addUser.run(username, password, email);
 
-    return true;
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function clientLogin(username, password, db) {
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
+    //
     var user = checkUser.get(username, password);
 
     return user !== undefined;
@@ -77,7 +82,8 @@ function clientLogin(username, password, db) {
 
 function addQuestion(question, answers, db) {
     if(answers.length !== 4) return;
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question varchar(255), A1 varchar(255), A2 varchar(255), A3 varchar(255), A4 varchar(255))');
+    // TODO: Might need to change the datatype here since 255 characters might be to short for a question
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question TINYTEXT, A1 TINYTEXT, A2 TINYTEXT, A3 TINYTEXT, A4 TINYTEXT)');
     table.run();
 
     const addQuestion = db.prepare('INSERT INTO questions (question, A1, A2, A3, A4) VALUES (?, ?, ?, ?, ?)');
@@ -146,3 +152,9 @@ if(require.main === module) {
 
 exports.clientLogin = clientLogin
 exports.clientRegister = clientRegister
+exports.addQuestion = addQuestion
+exports.checkMail = checkMail
+exports.insertCode = insertCode
+exports.checkCode = checkCode
+exports.updatePassword = updatePassword
+exports.generateCode = generateCode
