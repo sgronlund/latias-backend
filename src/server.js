@@ -1,4 +1,4 @@
-var app = require('express')('192.168.1.150');
+var app = require('express')();
 var nodemailer = require('nodemailer');
 
 const Database = require('better-sqlite3');
