@@ -1,4 +1,4 @@
-var app = require('express')();
+var app = require('express')('192.168.1.150');
 var nodemailer = require('nodemailer');
 
 const Database = require('better-sqlite3');
@@ -48,7 +48,11 @@ client.on('connection', (socket) => {
         if(checkCode(code, email)) socket.emit('codeSuccess');
         else socket.emit('codeFailure');
     })
-    socket.on('updatePass', (email, password) => {updatePassword(password, email)})
+    socket.on('updatePass', (email, password) => {updatePassword(password, email)});
+    
+    setInterval(() =>{
+        socket.emit("timeLeft", stringifySeconds(counter))
+        }, 1000);
 });
 
 function clientRegister(username, password, email) {
@@ -137,4 +141,26 @@ function checkMail(email) {
     const checkMail = db.prepare(`SELECT * FROM users WHERE email = ?`);
     var mail = checkMail.get(email);
     return mail !== undefined;
+}
+
+var counter = 604800;
+var countDown = setInterval(function(){
+    counter--;
+    if (counter === 0) {
+        //TODO: when counter is done, open up the quiz!
+        console.log("counter done");
+        clearInterval(countDown);
+    }
+}, 1000);
+
+function stringifySeconds(counter) {
+    var day = 86400; //A day in seconds
+    var hour = 3600; //An hour in seconds
+    var minute = 60; //A minute in seconds
+    // Figure out better solution for calculating this.
+    days = Math.floor(counter/day);
+    hours = Math.floor((counter%day)/hour);
+    minutes = Math.floor(((counter%day)%hour)/minute)
+    seconds = Math.floor(((counter%day)%hour)%minute);
+    return "days: " + days + " hours: " + hours + " minutes: " + minutes + " seconds: " + seconds;
 }
