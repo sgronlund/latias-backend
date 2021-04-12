@@ -1,57 +1,58 @@
-var app = require('express')();
-var nodemailer = require('nodemailer');
+function main() {
+    var app = require('express')("192.168.0.104");
+    var nodemailer = require('nodemailer');
 
-const Database = require('better-sqlite3');
-const db = new Database('database.db', { verbose: console.log });
+    const Database = require('better-sqlite3');
+    const db = new Database('database.db', { verbose: console.log });
 
-/** 
- * CORS is a mechanism which restricts us from hosting both the client and the server.
- * The package cors allows us the bypass this
- * */ 
-var cors = require('cors');
-app.use(cors());
+    /** 
+     * CORS is a mechanism which restricts us from hosting both the client and the server.
+     * The package cors allows us the bypass this
+     * */ 
+    var cors = require('cors');
+    app.use(cors());
 
-/// Creates an HTTP server using ExpressJS
-var http = require('http').createServer(app);
-const PORT = 8080;
-/// The cors: ... is also required to bypass the restriction stated above
-var client = require('socket.io')(http, {cors: {origin:"*"}});
+    /// Creates an HTTP server using ExpressJS
+    var http = require('http').createServer(app);
+    const PORT = 8080;
+    /// The cors: ... is also required to bypass the restriction stated above
+    var client = require('socket.io')(http, {cors: {origin:"*"}});
 
-/// Starts listening on the chosen port
-http.listen(PORT, () => {
-    console.log(`listening on *:${PORT}`);
-});
-
-/// Determines the behaviour for when a client connects to our socket.
-client.on('connection', (socket) => {
-    console.log("new client connected");
-    socket.emit('connection');
-    socket.on('register', (username, password, email) => {
-        if(clientRegister(username, password, email)) socket.emit('registerSuccess');
-        else socket.emit('registerFailure');
+    /// Starts listening on the chosen port
+    http.listen(PORT, () => {
+        console.log(`listening on *:${PORT}`);
     });
-    socket.on('login', (username, password) => {
-        if(clientLogin(username, password)) socket.emit('loginSuccess');
-        else socket.emit('loginFailure');
-    });
-    socket.on('resetPass', (email) => {
-        if(checkMail(email)) { 
-            var code = generateCode(8);
-            insertCode(code, email);
-            sendMail(code, email);
-            socket.emit('emailSuccess');
-        } else {
-            socket.emit('emailFailure');       
-        }
-    })
-    socket.on('submitCode', (code, email) => {
-        if(checkCode(code, email)) socket.emit('codeSuccess');
-        else socket.emit('codeFailure');
-    })
-    socket.on('updatePass', (email, password) => {updatePassword(password, email)})
-});
 
-function clientRegister(username, password, email) {
+    /// Determines the behaviour for when a client connects to our socket.
+    client.on('connection', (socket) => {
+        console.log("new client connected");
+        socket.emit('connection');
+        socket.on('register', (username, password, email) => {
+            if(clientRegister(username, password, email, db)) socket.emit('registerSuccess');
+            else socket.emit('registerFailure');
+        });
+        socket.on('login', (username, password) => {
+            if(clientLogin(username, password, db)) socket.emit('loginSuccess');
+            else socket.emit('loginFailure');
+        });
+        socket.on('resetPass', (email) => {
+            if(checkMail(email)) { 
+                var code = generateCode(8);
+                insertCode(code, email, db);
+                sendMail(code, email, db);
+                socket.emit('emailSuccess');
+            } else {
+                socket.emit('emailFailure');       
+            }
+        })
+        socket.on('submitCode', (code, email) => {
+            if(checkCode(code, email, db)) socket.emit('codeSuccess');
+            else socket.emit('codeFailure');
+        })
+        socket.on('updatePass', (email, password) => {updatePassword(password, email)})
+    });
+}
+function clientRegister(username, password, email, db) {
     //This should only be necessary while testing as the table SHOULD exist already
     const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
     table.run();
@@ -67,14 +68,14 @@ function clientRegister(username, password, email) {
     return true;
 }
 
-function clientLogin(username, password) {
+function clientLogin(username, password, db) {
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
     var user = checkUser.get(username, password);
 
     return user !== undefined;
 }
 
-function addQuestion(question, answers) {
+function addQuestion(question, answers, db) {
     if(answers.length !== 4) return;
     const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question varchar(255), A1 varchar(255), A2 varchar(255), A3 varchar(255), A4 varchar(255))');
     table.run();
@@ -117,24 +118,31 @@ function generateCode(length) {
     return result;
 }
 
-function insertCode(code, email) {
+function insertCode(code, email, db) {
     const insertCode = db.prepare(`UPDATE users SET resetcode = ? WHERE email = ?`);
     insertCode.run(code, email);
 }
 
-function checkCode(code, email) {
+function checkCode(code, email, db) {
     const checkCode = db.prepare(`SELECT * FROM users WHERE resetcode = ? AND email = ?`);
     var user = checkCode.get(code, email);
     return user !== undefined;
 }
 
-function updatePassword(password, email) {
+function updatePassword(password, email, db) {
     const updatePassword = db.prepare(`UPDATE users SET password = ? WHERE email = ?`);
     updatePassword.run(password, email);
 }
 
-function checkMail(email) {
+function checkMail(email, db) {
     const checkMail = db.prepare(`SELECT * FROM users WHERE email = ?`);
     var mail = checkMail.get(email);
     return mail !== undefined;
 }
+
+if(require.main === module) {
+    main();
+}
+
+exports.clientLogin = clientLogin
+exports.clientRegister = clientRegister
