@@ -8,7 +8,6 @@ const Database = require('better-sqlite3');
 describe("Test Suite for Server", () => {
   let io, serverSocket, clientSocket, db;
 
-
   beforeAll((done) => {
     db = new Database('db_for_test.db');
     const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
@@ -27,6 +26,7 @@ describe("Test Suite for Server", () => {
 
   afterEach(async (done) => {
     await db.prepare("DROP TABLE IF EXISTS users").run();
+    await db.prepare("DROP TABLE IF EXISTS questions").run();
     done();
   });
 
@@ -37,57 +37,135 @@ describe("Test Suite for Server", () => {
   
 
   test("Login in with faulty user fails", (done) => {
-    serverSocket.on("faultyuser", (user, pass) => {
+    serverSocket.on("faultyUser", (user, pass) => {
       const bool = backend.clientLogin(user, pass, db)
-      expect(bool).toBeFalsy();
+      expect(bool).toBe("invalid");
       done();
     });
     var usr = faker.internet.userName();
     var pass = faker.internet.password();
-    clientSocket.emit("faultyuser", usr, pass);
+    clientSocket.emit("faultyUser", usr, pass);
   });
 
-/**
- * Running the test which check if faulty input is handled together makes them fail?????????????????????
- */
-
   test("Login in with wrong password for registered user", (done) => {
-    serverSocket.on("wrongpass", (user, pass, email) => {
+    serverSocket.on("wrongPass", (user, pass, email) => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeTruthy();
-      expect(backend.clientLogin(user, "wrongpasswordihope", db)).toBeFalsy();
+      expect(backend.clientLogin(user, "wrongpasswordihope", db)).toBe("invalid");
       done();
     });
-    clientSocket.emit("wrongpass", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
+    clientSocket.emit("wrongPass", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
   });
 
   test("Login in with wrong user for registered user", (done) => {
-    serverSocket.on("wronguser", (user, pass, email) => {
+    serverSocket.on("wrongUser", (user, pass, email) => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeTruthy();
-      expect(backend.clientLogin("wrongusernameihope", pass, db)).toBeFalsy();
+      expect(backend.clientLogin("wrongusernameihope", pass, db)).toBe("invalid");
       done();
     });
-    clientSocket.emit("wronguser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
+    clientSocket.emit("wrongUser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
   });
 
+  test("Register user and log in", (done) => {
+    serverSocket.on("validUser", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db)
+      expect(register).toBeTruthy();
+      expect(backend.clientLogin(user, pass, db)).toBe("valid");
+      done();
+    });
+    clientSocket.emit("validUser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
+  });
 
-  test("Test register with username, password and email as null", (done) => {
-    serverSocket.on("detailsnull", (user, pass, email) => {
+  test("Login as root", (done) => {
+    serverSocket.on("loginRoot", (user, pass, email) => {
+      expect(backend.clientLogin(user, pass, db)).toBe("root");
+      done();
+    });
+    clientSocket.emit("loginRoot", "root", "rootPass", faker.internet.exampleEmail());
+  });
+
+  test("Register root", (done) => {
+    serverSocket.on("registerRoot", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db)
+      expect(register).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("registerRoot", "root", faker.internet.password(), faker.internet.exampleEmail());
+  });
+
+  test("Register with username, password and email as null", (done) => {
+    serverSocket.on("detailsNull", (user, pass, email) => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeFalsy();
       done();
       
     });
-    clientSocket.emit("detailsnull");
+    clientSocket.emit("detailsNull");
   });
 
-  test("Test register with username, password and email as empty", (done) => {
-    serverSocket.on("detailsempty", (user, pass, email) => {
+  test("Register with username, password and email as empty", (done) => {
+    serverSocket.on("detailsEmpty", (user, pass, email) => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeFalsy();
       done();
     });
-    clientSocket.emit("detailsempty", "", "", "");
+    clientSocket.emit("detailsEmpty", "", "", "");
+  });
+
+  test("Add question with question and answer as null", (done) => {
+    serverSocket.on("addQuestionNull", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db)
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionNull");
+  });
+
+  test("Add question with empty array", (done) => {
+    serverSocket.on("addQuestionEmpty", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db)
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionEmpty", "QUESTION" , []);
+  });
+
+  test("Add question with too short answer array", (done) => {
+    serverSocket.on("addQuestionShort", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db)
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionShort", "QUESTION" , ["A","B","C"]);
+  });
+
+  test("Add question and check for it's existence", (done) => {
+    serverSocket.on("addQuestionExistence", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db)
+      expect(operation).toBeTruthy();
+      done();
+    });
+    clientSocket.emit("addQuestionExistence", "QUESTION", ["FALSE1","FALSE2","FALSE3","CORRECT"]);
+  });
+
+  test("Add question and check with correct answer", (done) => {
+    serverSocket.on("addQuestionCheck", (question, answers) => {
+      backend.addQuestion(question, answers, db);
+      const check = backend.checkAnswer("QUESTION","CORRECT", db);
+      expect(check).toBeTruthy();
+      done();
+    });
+    clientSocket.emit("addQuestionCheck", "QUESTION", ["FALSE1","FALSE2","FALSE3","CORRECT"]);
+  });
+
+  test("Add question and check with wrong answer", (done) => {
+    serverSocket.on("addQuestionCheck", (question, answers) => {
+      backend.addQuestion(question, answers, db);
+      const check = backend.checkAnswer("QUESTION","FALSE1", db);
+      expect(check).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionCheck", "QUESTION", ["FALSE1","FALSE2","FALSE3","CORRECT"]);
   });
 });

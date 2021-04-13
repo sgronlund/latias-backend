@@ -9,7 +9,7 @@
     "document": "jsdoc server.js -d ../docs/out"
   },
   "jest": {
-    "verbose" : true
+    "verbose": true
   },
   "repository": {
     "type": "git",

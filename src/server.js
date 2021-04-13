@@ -48,7 +48,8 @@ function main() {
          * corresponding success/fail message is sent
          */
         socket.on('login', (username, password) => {
-            if(clientLogin(username, password, db)) socket.emit('loginSuccess');
+            if(clientLogin(username, password, db) === "valid") socket.emit('loginSuccess');
+            else if(clientLogin(username, password, db) === "root") socket.emit('loginRoot');
             else socket.emit('loginFailure');
         });
 
@@ -87,6 +88,10 @@ function main() {
             if(updatePassword(password, email, db)) socket.emit("updatePassSuccess");
             else socket.emit("updatePassFailure");
         });
+
+        socket.on('addQuestion', (question, answers) => {
+            if(!addQuestion(question, answers, db)) socket.emit("questionFailure");
+        })
         
         /**
          * @summary emits the current time left to every connected
@@ -110,6 +115,7 @@ function main() {
  */
 function clientRegister(username, password, email, db) {
     if(!username || !password || !email || !db) return false;
+    if(username === "root") return false; //TODO: return something else and emit to user
     //This should only be necessary while testing as the table SHOULD exist already
     const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
     table.run();
@@ -134,13 +140,17 @@ function clientRegister(username, password, email, db) {
  * @returns true if login was successful, false if not
  */
 function clientLogin(username, password, db) {
-    if(!username || !password || !db) return false;
+    if(!username || !password || !db) return "invalid";
+
+    if(username === "root" && password === "rootPass") {
+        return "root";
+    }
 
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
     var user = checkUser.get(username, password);
 
-    if(user) return true;
-    else return false;
+    if(user) return "valid";
+    else return "invalid";
 }
 
 /**
@@ -150,16 +160,39 @@ function clientLogin(username, password, db) {
  * @param {[String, String, String, String]} answers An array
  * @param {Database} db database to add question to
  * of answers to add 
+ * @returns true if input is correct, false if not
  */
 function addQuestion(question, answers, db) {
-    if(!username || !password || !db) return;
-    if(answers.length !== 4) return;
+    if(!question || !answers || !db) return false;
+    if(answers.length !== 4) return false;
 
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question varchar(255), A1 varchar(255), A2 varchar(255), A3 varchar(255), A4 varchar(255))');
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))');
     table.run();
 
-    const addQuestion = db.prepare('INSERT INTO questions (question, A1, A2, A3, A4) VALUES (?, ?, ?, ?, ?)');
+    const addQuestion = db.prepare('INSERT INTO questions (question, wrong1, wrong2, wrong3, correct) VALUES (?, ?, ?, ?, ?)');
     addQuestion.run(question, answers[0], answers[1], answers[2], answers[3]);
+
+    return true;
+}
+
+/**
+ * @summary Checks in the database if the question is in the
+ * database and if the answer matches the correct one
+ * @param {String} question The question to check
+ * @param {String} answer The answer to check 
+ * @param {Database} db database to check in
+ * @returns true if answer is correct, false if not
+ */
+function checkAnswer(question, answer, db) {
+    if(!question || !answer || !db) return false;
+
+    const checkAnswer = db.prepare('SELECT * FROM questions where question = ? AND correct = ?');
+    var correct = checkAnswer.get(question, answer);
+    if(correct) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /**
@@ -167,7 +200,7 @@ function addQuestion(question, answers, db) {
  * specified email
  * @param {String} code code to send
  * @param {String} email email to send to
- * @param {Nodemailer} nodemailer node to send email from
+ * @param {Object} nodemailer node to send email from
  * @throws error if mail is not existent
  */
 function sendMail(code, email, nodemailer) {
@@ -286,7 +319,8 @@ var countDown = setInterval(function(){
     counter--;
     if (counter === 0) {
         counter = 604800
-        //TODO: open quiz
+        //TODO: Send question to clients
+        //TODO: Reset questions table
         console.log("counter done");
         clearInterval(countDown);
     }
@@ -317,6 +351,7 @@ if(require.main === module) {
 exports.clientLogin = clientLogin
 exports.clientRegister = clientRegister
 exports.addQuestion = addQuestion
+exports.checkAnswer = checkAnswer
 exports.checkMail = checkMail
 exports.insertCode = insertCode
 exports.checkCode = checkCode
