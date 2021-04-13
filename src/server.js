@@ -120,6 +120,8 @@ function clientRegister(username, password, email, db) {
   
     const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)'); //resetcode not generated yet
     addUser.run(username, password, email);
+    
+    return true;
 }
 
 /**
