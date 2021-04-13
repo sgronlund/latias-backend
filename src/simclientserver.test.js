@@ -76,7 +76,7 @@ describe("Test Suite for Server", () => {
     });
     clientSocket.emit("validUser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
   });
-
+ 
   test("Login as root", (done) => {
     serverSocket.on("loginRoot", (user, pass, email) => {
       expect(backend.clientLogin(user, pass, db)).toBe("root");
