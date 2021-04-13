@@ -100,6 +100,7 @@ function main() {
  * @param {String} username username of the new user
  * @param {String} password password of the new user
  * @param {String} email email of the new user
+ * @param {Database} db database to register user in
  * @returns true if register was successful, false if not
  */
 function clientRegister(username, password, email, db) {
@@ -124,6 +125,7 @@ function clientRegister(username, password, email, db) {
  * login will not be successful.
  * @param {String} username username of the user logging in
  * @param {String} password password of the user logging in
+ * @param {Database} db database to check user/password against
  * @returns true if login was successful, false if not
  */
 function clientLogin(username, password, db) {
@@ -138,6 +140,7 @@ function clientLogin(username, password, db) {
  * the database.
  * @param {String} question The question to add
  * @param {[String, String, String, String]} answers An array
+ * @param {Database} db database to add question to
  * of answers to add 
  */
 function addQuestion(question, answers, db) {
@@ -154,6 +157,7 @@ function addQuestion(question, answers, db) {
  * specified email
  * @param {String} code code to send
  * @param {String} email email to send to
+ * @param {Nodemailer} nodemailer node to send email from
  * @throws error if mail is not existent
  */
 function sendMail(code, email, nodemailer) {
@@ -199,6 +203,7 @@ function generateCode(length) {
  * given an email
  * @param {String} code resetcode to insert
  * @param {String} email email of the user
+ * @param {Database} db database to add code to
  */
 function insertCode(code, email, db) {
     const insertCode = db.prepare(`UPDATE users SET resetcode = ? WHERE email = ?`);
@@ -210,6 +215,7 @@ function insertCode(code, email, db) {
  * the database
  * @param {String} code resetcode to test 
  * @param {String} email email to test the code with
+ * @param {Database} db database to check code against
  * @returns true if code matches, false if not
  */
 function checkCode(code, email, db) {
@@ -222,6 +228,7 @@ function checkCode(code, email, db) {
  * @summary Updates the password for a user with a given email
  * @param {String} password password of the user 
  * @param {String} email email of the user
+ * @param {Database} db database to update password in
  */
 function updatePassword(password, email, db) {
     const updatePassword = db.prepare(`UPDATE users SET password = ? WHERE email = ?`);
@@ -231,6 +238,7 @@ function updatePassword(password, email, db) {
 /**
  * @summary Checks if an email exists in the database
  * @param {String} email email to check
+ * @param {Database} db database to check mail against
  * @returns true if email exists, false if not
  */
 function checkMail(email, db) {
