@@ -4,6 +4,7 @@ const backend = require("./server");
 const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require('better-sqlite3');
+const { seed } = require("faker/locale/en_US");
 
 describe("Test Suite for Server", () => {
   let io, serverSocket, clientSocket, db;
@@ -25,22 +26,26 @@ describe("Test Suite for Server", () => {
     });
   });
 
+  afterEach(async (done) => {
+    await db.prepare("DROP TABLE IF EXISTS users").run();
+    done();
+  });
+
   afterAll(async () => {
     await io.close();
     await clientSocket.close();
-    const query = db.prepare("DROP TABLE IF EXISTS users");
-    query.run();
   });
   
 
   test("Login in with faulty user fails", (done) => {
-    serverSocket.on("login", (user, pass) => {
-      expect(backend.clientLogin(user, pass, db)).toBeFalsy();
+    serverSocket.on("faultyuser", (user, pass) => {
+      const bool = backend.clientLogin(user, pass, db)
+      expect(bool).toBeFalsy();
       done();
     });
     var usr = faker.internet.userName();
     var pass = faker.internet.password();
-    clientSocket.emit("login", usr, pass);
+    clientSocket.emit("faultyuser", usr, pass);
   });
 
 /**
@@ -48,41 +53,42 @@ describe("Test Suite for Server", () => {
  */
 
   test("Login in with wrong password for registered user", (done) => {
-    serverSocket.on("login", (user, pass, email) => {
-      expect(backend.clientRegister(user, pass, email, db)).toBeTruthy();
+    serverSocket.on("wrongpass", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db)
+      expect(register).toBeTruthy();
       expect(backend.clientLogin(user, "wrongpasswordihope", db)).toBeFalsy();
       done();
     });
-    //clientSocket.emit("login", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
-    clientSocket.emit("login", "masterquizzer", "thecorrectpassword", "user@email.com")
+    clientSocket.emit("wrongpass", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
   });
 
   test("Login in with wrong user for registered user", (done) => {
-    // Kör själv och passar
-    serverSocket.on("login", (user, pass, email) => {
-      expect(backend.clientRegister(user, pass, email, db)).toBeTruthy();
+    serverSocket.on("wronguser", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db)
+      expect(register).toBeTruthy();
       expect(backend.clientLogin("wrongusernameihope", pass, db)).toBeFalsy();
       done();
     });
-    ///clientSocket.emit("login", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
-    clientSocket.emit("login", "arealuser", "userpassword", "user@email.com")
+    clientSocket.emit("wronguser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
   });
 
 
   test("Test register with username, password and email as null", (done) => {
-    serverSocket.on("login", (user, pass, email) => {
-      expect(backend.clientRegister(user, pass, email, db)).toBeFalsy();
+    serverSocket.on("detailsnull", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db)
+      expect(register).toBeFalsy();
       done();
       
     });
-    clientSocket.emit("login");
+    clientSocket.emit("detailsnull");
   });
 
   test("Test register with username, password and email as empty", (done) => {
-    serverSocket.on("login", (user, pass, email) => {
-      expect(backend.clientRegister(user, pass, email, db)).toBeFalsy();
+    serverSocket.on("detailsempty", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db)
+      expect(register).toBeFalsy();
       done();
     });
-    clientSocket.emit("login", "", "", "");
+    clientSocket.emit("detailsempty", "", "", "");
   });
 });

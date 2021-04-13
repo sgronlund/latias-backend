@@ -53,7 +53,7 @@ function main() {
     });
 }
 function clientRegister(username, password, email, db) {
-    if (username && password && email ) {
+    if (username && password && email && db) {
         //This should only be necessary while testing as the table SHOULD exist already
         const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username TINYTEXT, password TINYTEXT, email TINYTEXT, resetcode TINYTEXT, points INT)');
         table.run();
@@ -61,7 +61,7 @@ function clientRegister(username, password, email, db) {
         const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
         var user = checkUser.get(username, email);
 
-        if(user !== undefined) return false; //If username is busy, return false
+        if(user) return false; //If username is busy, return false
 
         const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)'); //resetcode not generated yet
         addUser.run(username, password, email);
@@ -73,11 +73,17 @@ function clientRegister(username, password, email, db) {
 }
 
 function clientLogin(username, password, db) {
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
-    //
-    var user = checkUser.get(username, password);
-
-    return user !== undefined;
+    if(username && password && db) {
+        const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
+        var user = checkUser.get(username, password);
+        if(user) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
 }
 
 function addQuestion(question, answers, db) {
@@ -132,7 +138,11 @@ function insertCode(code, email, db) {
 function checkCode(code, email, db) {
     const checkCode = db.prepare(`SELECT * FROM users WHERE resetcode = ? AND email = ?`);
     var user = checkCode.get(code, email);
-    return user !== undefined;
+    if(user) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function updatePassword(password, email, db) {
