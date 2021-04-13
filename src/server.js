@@ -82,7 +82,10 @@ function main() {
          * @summary When the socket receives an updatePass signal,
          * the users password is updated with the received password
          */
-        socket.on('updatePass', (email, password) => {updatePassword(password, email, db)});
+        socket.on('updatePass', (email, password) => {
+            if(updatePassword(password, email, db)) socket.emit("updatePassSuccess");
+            else socket.emit("updatePassFailure");
+        });
         
         /**
          * @summary emits the current time left to every connected
@@ -96,7 +99,8 @@ function main() {
 
 /**
  * @summary Tries to register a new username. If username or
- * email is busy, register will not be successful
+ * email is busy, register will not be successful and function
+ * will return false
  * @param {String} username username of the new user
  * @param {String} password password of the new user
  * @param {String} email email of the new user
@@ -104,6 +108,7 @@ function main() {
  * @returns true if register was successful, false if not
  */
 function clientRegister(username, password, email, db) {
+    if(!username || !password || !email || !db) return false;
     //This should only be necessary while testing as the table SHOULD exist already
     const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
     table.run();
@@ -111,7 +116,7 @@ function clientRegister(username, password, email, db) {
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
     var user = checkUser.get(username, email);
 
-    if(user !== undefined) return false; //If username is busy, return false
+    if(user) return false; //If username or email is busy, return false
 
     const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)'); //resetcode not generated yet
     addUser.run(username, password, email);
@@ -129,10 +134,13 @@ function clientRegister(username, password, email, db) {
  * @returns true if login was successful, false if not
  */
 function clientLogin(username, password, db) {
+    if(!username || !password || !db) return false;
+
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
     var user = checkUser.get(username, password);
 
-    return user !== undefined;
+    if(user) return true;
+    else return false;
 }
 
 /**
@@ -144,7 +152,9 @@ function clientLogin(username, password, db) {
  * of answers to add 
  */
 function addQuestion(question, answers, db) {
+    if(!username || !password || !db) return;
     if(answers.length !== 4) return;
+
     const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question varchar(255), A1 varchar(255), A2 varchar(255), A3 varchar(255), A4 varchar(255))');
     table.run();
 
@@ -161,6 +171,8 @@ function addQuestion(question, answers, db) {
  * @throws error if mail is not existent
  */
 function sendMail(code, email, nodemailer) {
+    if(!code || !email || !nodemailer) return;
+
     var transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -185,9 +197,11 @@ function sendMail(code, email, nodemailer) {
 /**
  * Generates a pseudo-random string of letters
  * @param {String} length length of the string
- * @returns pseudo-random string
+ * @returns pseudo-random string or undefined if
+ * length is 0
  */
 function generateCode(length) {
+    if(length == 0) return undefined;
     const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     for ( let i = 0; i < length; i++ ) {
@@ -206,6 +220,8 @@ function generateCode(length) {
  * @param {Database} db database to add code to
  */
 function insertCode(code, email, db) {
+    if(!code || !email || !db) return;
+
     const insertCode = db.prepare(`UPDATE users SET resetcode = ? WHERE email = ?`);
     insertCode.run(code, email);
 }
@@ -219,6 +235,8 @@ function insertCode(code, email, db) {
  * @returns true if code matches, false if not
  */
 function checkCode(code, email, db) {
+    if(!code || !email || !db) return false;
+
     const checkCode = db.prepare(`SELECT * FROM users WHERE resetcode = ? AND email = ?`);
     var user = checkCode.get(code, email);
     return user !== undefined;
@@ -229,10 +247,16 @@ function checkCode(code, email, db) {
  * @param {String} password password of the user 
  * @param {String} email email of the user
  * @param {Database} db database to update password in
+ * @return true if password, email and database is valied, false
+ * if not
  */
 function updatePassword(password, email, db) {
+    if(!password || !email || !db) return false;
+
     const updatePassword = db.prepare(`UPDATE users SET password = ? WHERE email = ?`);
     updatePassword.run(password, email);
+
+    return true;
 }
 
 /**
@@ -242,6 +266,8 @@ function updatePassword(password, email, db) {
  * @returns true if email exists, false if not
  */
 function checkMail(email, db) {
+    if(!email || !db) return false;
+
     const checkMail = db.prepare(`SELECT * FROM users WHERE email = ?`);
     var mail = checkMail.get(email);
     return mail !== undefined;
@@ -255,7 +281,8 @@ var counter = 604800;
 var countDown = setInterval(function(){
     counter--;
     if (counter === 0) {
-        //TODO: when counter is done, open up the quiz!
+        counter = 604800
+        //TODO: open quiz
         console.log("counter done");
         clearInterval(countDown);
     }
