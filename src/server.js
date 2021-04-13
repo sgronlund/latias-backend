@@ -36,6 +36,7 @@ function main() {
          * the username, password and email is checked and a
          * corresponding success/fail message is sent
          */
+      
         socket.on('register', (username, password, email) => {
             if(clientRegister(username, password, email, db)) socket.emit('registerSuccess');
             else socket.emit('registerFailure');
@@ -112,15 +113,14 @@ function clientRegister(username, password, email, db) {
     //This should only be necessary while testing as the table SHOULD exist already
     const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
     table.run();
-
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
     var user = checkUser.get(username, email);
-
+  
     if(user) return false; //If username or email is busy, return false
-
+  
     const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)'); //resetcode not generated yet
     addUser.run(username, password, email);
-
+    
     return true;
 }
 
@@ -239,7 +239,11 @@ function checkCode(code, email, db) {
 
     const checkCode = db.prepare(`SELECT * FROM users WHERE resetcode = ? AND email = ?`);
     var user = checkCode.get(code, email);
-    return user !== undefined;
+    if(user) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /**
