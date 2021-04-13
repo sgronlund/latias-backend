@@ -1,10 +1,9 @@
 const { createServer } = require("http");
-const { express } = require("express")("192.168.0.104")
+const { express } = require("express")();
 const backend = require("./server");
 const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require('better-sqlite3');
-const { seed } = require("faker/locale/en_US");
 
 describe("Test Suite for Server", () => {
   let io, serverSocket, clientSocket, db;
@@ -18,7 +17,7 @@ describe("Test Suite for Server", () => {
     io = require('socket.io')(httpServer, {cors: {origin:"*"}});
     httpServer.listen(() => {
       const port = httpServer.address().port;
-      clientSocket = new Client(`http://192.168.0.104:${port}`);
+      clientSocket = new Client(`http://localhost:${port}`);
       io.on("connection", (socket) => {
         serverSocket = socket;
       });
