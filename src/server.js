@@ -6,6 +6,8 @@ function main() {
     const Database = require('better-sqlite3');
     const db = new Database('database.db', { verbose: console.log });
 
+    var clients = [];
+
     /** 
      * CORS is a mechanism which restricts us from hosting both the client and the server.
      * The package cors allows us the bypass this
@@ -108,7 +110,14 @@ function main() {
             var g = bigInt(2579);
             var p = bigInt(5159);
             client_public_key = bigInt(client_public_key);
+            
             var shared_key = client_public_key.modPow(server_private_key,p);
+            console.log(shared_key);
+
+            clients.push({
+                id: socket.id,
+                key: shared_key
+            });
         });
 
 
