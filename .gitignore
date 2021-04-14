@@ -1,3 +1,4 @@
+docs
 *.db
 src/*.db
 src/tests/*.db
