@@ -1,5 +1,6 @@
-var app = require('express')('192.168.1.');
+var app = require('express')('192.168.1.124');
 var nodemailer = require('nodemailer');
+var bigInt = require('big-integer');
 
 const Database = require('better-sqlite3');
 const db = new Database('database.db', { verbose: console.log });
@@ -58,19 +59,18 @@ client.on('connection', (socket) => {
     */
 
     socket.on('start-key-exchange', () => {
-        var server_private_key = 4204201337; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-        var server_public_key = 69420691337;
-        var g = 2579;
-        var p = 5159;
-        client.emit('server-public', server_public_key, g, p);
+        var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+        var g = bigInt(2579);
+        var p = bigInt(5159);
+        var server_public_key = g.modPow(server_private_key,p);
+        client.emit('server-public', Number(server_public_key), Number(g), Number(p));
     });
     socket.on('client-public',(client_public_key) => {
-        var server_private_key = 4204201337; //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-        var server_public_key = 69420691337;
-        var g = 2579;
-        var p = 5159;
-        var shared_key = (client_public_key**server_private_key) % p;
-        console.log("SHARED = " + shared_key);
+        var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+        var g = bigInt(2579);
+        var p = bigInt(5159);
+        client_public_key = bigInt(client_public_key);
+        var shared_key = client_public_key.modPow(server_private_key,p);
     });
 });
 
