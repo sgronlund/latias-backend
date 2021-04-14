@@ -1,3 +1,6 @@
+*.db
+src/*.db
+src/tests/*.db
 src/server/.db-journal
 node_modules/**/*
 package-lock.json
