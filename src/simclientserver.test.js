@@ -6,13 +6,13 @@ const Client = require("socket.io-client");
 const Database = require('better-sqlite3');
 
 describe("Test Suite for Server", () => {
-  let io, serverSocket, clientSocket, db;
+  let io, serverSocket, clientSocket, db, users, httpServer;
 
   beforeAll((done) => {
     db = new Database('db_for_test.db');
     const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))');
     table.run();
-    const httpServer = createServer(express);
+    httpServer = createServer(express);
     io = require('socket.io')(httpServer, {cors: {origin:"*"}});
     httpServer.listen(() => {
       const port = httpServer.address().port;
@@ -22,11 +22,13 @@ describe("Test Suite for Server", () => {
       });
       clientSocket.on("connect", done);
     });
+    users = [];
   });
 
   afterEach(async (done) => {
     await db.prepare("DROP TABLE IF EXISTS users").run();
     await db.prepare("DROP TABLE IF EXISTS questions").run();
+    users = [];
     done();
   });
 
@@ -37,52 +39,52 @@ describe("Test Suite for Server", () => {
   
 
   test("Login in with faulty user fails", (done) => {
-    serverSocket.on("faultyUser", (user, pass) => {
-      const bool = backend.clientLogin(user, pass, db)
+    serverSocket.on("faultyUser", (user, pass, id, users) => {
+      const bool = backend.clientLogin(user, pass, db, users, id)
       expect(bool).toBe("invalid");
       done();
     });
     var usr = faker.internet.userName();
     var pass = faker.internet.password();
-    clientSocket.emit("faultyUser", usr, pass);
+    clientSocket.emit("faultyUser", usr, pass, clientSocket.id, users);
   });
 
   test("Login in with wrong password for registered user", (done) => {
-    serverSocket.on("wrongPass", (user, pass, email) => {
+    serverSocket.on("wrongPass", (user, pass, email, id, users) => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeTruthy();
-      expect(backend.clientLogin(user, "wrongpasswordihope", db)).toBe("invalid");
+      expect(backend.clientLogin(user, "wrongpasswordihope", db, users, id)).toBe("invalid");
       done();
     });
-    clientSocket.emit("wrongPass", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
+    clientSocket.emit("wrongPass", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail(), clientSocket.id, users);
   });
 
   test("Login in with wrong user for registered user", (done) => {
-    serverSocket.on("wrongUser", (user, pass, email) => {
+    serverSocket.on("wrongUser", (user, pass, email, id, users) => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeTruthy();
-      expect(backend.clientLogin("wrongusernameihope", pass, db)).toBe("invalid");
+      expect(backend.clientLogin("wrongusernameihope", pass, db, users, id)).toBe("invalid");
       done();
     });
-    clientSocket.emit("wrongUser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
+    clientSocket.emit("wrongUser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail(), clientSocket.id, users);
   });
 
   test("Register user and log in", (done) => {
-    serverSocket.on("validUser", (user, pass, email) => {
+    serverSocket.on("validUser", (user, pass, email, id, users) => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeTruthy();
-      expect(backend.clientLogin(user, pass, db)).toBe("valid");
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe("valid");
       done();
     });
-    clientSocket.emit("validUser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail());
+    clientSocket.emit("validUser", faker.internet.userName(), faker.internet.password(), faker.internet.exampleEmail(), clientSocket.id, users);
   });
  
   test("Login as root", (done) => {
-    serverSocket.on("loginRoot", (user, pass, email) => {
-      expect(backend.clientLogin(user, pass, db)).toBe("root");
+    serverSocket.on("loginRoot", (user, pass, id, users) => {
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe("root");
       done();
     });
-    clientSocket.emit("loginRoot", "root", "rootPass", faker.internet.exampleEmail());
+    clientSocket.emit("loginRoot", "root", "rootPass", clientSocket.id, users);
   });
 
   test("Register root", (done) => {
@@ -168,4 +170,68 @@ describe("Test Suite for Server", () => {
     });
     clientSocket.emit("addQuestionCheck", "QUESTION", ["FALSE1","FALSE2","FALSE3","CORRECT"]);
   });
+
+  test("Register user, login and fetch the username", (done) => {
+    serverSocket.on("register", (user, pass, email, id) => {
+      backend.clientRegister(user, pass, email, db);
+      backend.clientLogin(user, pass, db, users, id);
+      done();
+    });
+    serverSocket.on("fetchUser", (id, user) => {
+      var testUser = backend.getUser(id, users);
+      expect(testUser).toBe(user);
+      done();
+    });
+    var user = faker.internet.userName(); 
+    clientSocket.emit("register", user, faker.internet.password(), faker.internet.exampleEmail(), clientSocket.id);
+    clientSocket.emit("fetchUser", clientSocket.id, user);
+  });
+
+  test("try to fetch existing user with non-existing socket id", (done) => {
+    serverSocket.on("register2", (user, pass, email, id) => {
+      backend.clientRegister(user, pass, email, db);
+      backend.clientLogin(user, pass, db, users, id);
+      done();
+    });
+    serverSocket.on("fetchUserNonExistingSocket", (id) => {
+      var testUser = backend.getUser(id, users);
+      expect(testUser).toBe(undefined);
+      done();
+    });
+    var user = faker.internet.userName(); 
+    clientSocket.emit("register2", user, faker.internet.password(), faker.internet.exampleEmail(), clientSocket.id + "b");
+    clientSocket.emit("fetchUserNonExistingSocket", clientSocket.id, user);
+  });
+
+  test("try to fetch existing non-existing user with correct socket id", (done) => {
+    serverSocket.on("fetchUserWrongId", (id) => {
+      var testUser = backend.getUser(id, users);
+      expect(testUser).toBe(undefined);
+      done();
+    });
+    clientSocket.emit("fetchUserWrongId", clientSocket.id, faker.internet.userName());
+  });
+
+  ///Tried to connect a new client, however could not get it to work
+  /*
+  test.only("try to fetch existing user with wrong (but existing) socket id", (done) => {
+    const port = httpServer.address().port;
+    wrongClientSocket = new Client(`http://localhost:${port}`);
+    expect(wrongClientSocket).toBe(!undefined);
+    serverSocket.on("register3", (user, pass, email, id) => {
+      backend.clientRegister(user, pass, email, db);
+      backend.clientLogin(user, pass, db, users, id);
+      done();
+    });
+    serverSocket.on("fetchUserWrongSocket", (id) => {
+      var testUser = backend.getUser(id, users);
+      expect(testUser).toBe(undefined);
+      done();
+    });
+
+    var user = faker.internet.userName(); 
+    clientSocket.emit("register3", user, faker.internet.password(), faker.internet.exampleEmail(), wrongClientSocket.id);
+    clientSocket.emit("fetchUserWrongSocket", clientSocket.id, user);
+  });
+  */
 });

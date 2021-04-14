@@ -1,4 +1,6 @@
 function main() {
+    let users = [];
+    
     var app = require('express')();
     var nodemailer = require('nodemailer');
     var bigInt = require('big-integer');
@@ -49,8 +51,10 @@ function main() {
          * corresponding success/fail message is sent
          */
         socket.on('login', (username, password) => {
-            if(clientLogin(username, password, db) === "valid") socket.emit('loginSuccess');
-            else if(clientLogin(username, password, db) === "root") socket.emit('loginRoot');
+            if(clientLogin(username, password, db, users, socket.id) === "valid") {
+                socket.emit('loginSuccess');
+            }
+            else if(clientLogin(username, password, db, users, socket.id) === "root") socket.emit('loginRoot');
             else socket.emit('loginFailure');
         });
 
@@ -93,6 +97,15 @@ function main() {
         socket.on('addQuestion', (question, answers) => {
             if(!addQuestion(question, answers, db)) socket.emit("questionFailure");
         })
+
+        socket.on('fetchUser', (id) => {
+            var user = getUser(id, users);
+            if(user) {
+                socket.emit('returnUserSuccess', user);
+            } else {
+                socket.emit('returnUserFailure');
+            }
+        })
         
 
         socket.on('start-key-exchange', () => {
@@ -130,7 +143,7 @@ function main() {
  * @param {String} password password of the new user
  * @param {String} email email of the new user
  * @param {Database} db database to register user in
- * @returns true if register was successful, false if not
+ * @returns {Boolean} true if register was successful, false if not
  */
 function clientRegister(username, password, email, db) {
     if(!username || !password || !email || !db) return false;
@@ -151,14 +164,16 @@ function clientRegister(username, password, email, db) {
 
 /** 
  * @param {Database} db database to check user/password against
- * @returns true if login was successful, false if not
+ * @returns {Boolean} true if login was successful, false if not
  */
-function clientLogin(username, password, db) {
+function clientLogin(username, password, db, users, id) {
     if(!username || !password || !db) return "invalid";
 
     if(username === "root" && password === "rootPass") {
         return "root";
     }
+
+    users.push({ID: id, username: username});
 
     const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
     var user = checkUser.get(username, password);
@@ -173,7 +188,7 @@ function clientLogin(username, password, db) {
  * @param {[String, String, String, String]} answers An array
  * @param {Database} db database to add question to
  * of answers to add 
- * @returns true if input is correct, false if not
+ * @returns {Boolean} true if input is correct, false if not
  */
 function addQuestion(question, answers, db) {
     if(!question || !answers || !db) return false;
@@ -194,7 +209,7 @@ function addQuestion(question, answers, db) {
  * @param {String} question The question to check
  * @param {String} answer The answer to check 
  * @param {Database} db database to check in
- * @returns true if answer is correct, false if not
+ * @returns {Boolean} true if answer is correct, false if not
  */
 function checkAnswer(question, answer, db) {
     if(!question || !answer || !db) return false;
@@ -243,7 +258,7 @@ function sendMail(code, email, nodemailer) {
 /**
  * Generates a pseudo-random string of letters
  * @param {String} length length of the string
- * @returns pseudo-random string or undefined if
+ * @returns {String} pseudo-random string or undefined if
  * length is 0
  */
 function generateCode(length) {
@@ -278,7 +293,7 @@ function insertCode(code, email, db) {
  * @param {String} code resetcode to test 
  * @param {String} email email to test the code with
  * @param {Database} db database to check code against
- * @returns true if code matches, false if not
+ * @returns {Boolean} true if code matches, false if not
  */
 function checkCode(code, email, db) {
     if(!code || !email || !db) return false;
@@ -313,7 +328,7 @@ function updatePassword(password, email, db) {
  * @summary Checks if an email exists in the database
  * @param {String} email email to check
  * @param {Database} db database to check mail against
- * @returns true if email exists, false if not
+ * @returns {Boolean} true if email exists, false if not
  */
 function checkMail(email, db) {
     if(!email || !db) return false;
@@ -343,7 +358,7 @@ var countDown = setInterval(function(){
  * @summary Converts seconds to days, hours, minutes and
  * seconds
  * @param {String} counter seconds to convert to string
- * @returns "stringified" seconds
+ * @returns {String} "stringified" seconds
  */
 function stringifySeconds(counter) {
     var day = 86400; //A day in seconds
@@ -355,6 +370,24 @@ function stringifySeconds(counter) {
     minutes = Math.floor(((counter%day)%hour)/minute)
     seconds = Math.floor(((counter%day)%hour)%minute);
     return "days: " + days + " hours: " + hours + " minutes: " + minutes + " seconds: " + seconds;
+}
+
+/**
+ * @summary Gets the username for a given socket id
+ * @param {String} id id of the socket 
+ * @param {{ID: String, username: String}} users array of all users
+ * @returns {String} username for the given socket id or undefined
+ * if it can't find the user
+ */
+function getUser(id, users) {
+    if(!id || !users) return undefined;
+
+    for(user of users) {
+        if(user.ID === id) {
+            return user.username;
+        } 
+    }
+    return undefined;
 }
 
 if(require.main === module) {
@@ -371,3 +404,4 @@ exports.checkCode = checkCode
 exports.updatePassword = updatePassword
 exports.generateCode = generateCode
 exports.stringifySeconds = stringifySeconds
+exports.getUser = getUser
