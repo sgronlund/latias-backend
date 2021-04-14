@@ -134,7 +134,6 @@ describe("Test Suite for Server", () => {
       const register = backend.clientRegister(user, pass, email, db)
       expect(register).toBeFalsy();
       done();
-      
     });
     clientSocket.emit("detailsNull");
   });
@@ -329,7 +328,6 @@ describe("Test Suite for Server", () => {
   test("Insert code and check it's existence", (done) => {
     serverSocket.on("register3", (user, pass, email) => {
       expect(backend.clientRegister(user, pass, email, db)).toBeTruthy();
-      done();
     });
     serverSocket.on("insertCode", (code, email) => {
       backend.insertCode(code, email, db);

@@ -8,7 +8,8 @@
     "start": "node server.js",
     "document": "jsdoc server.js -d ../docs/out",
     "stress_test": "npx jest tests/stresstests.test.js",
-    "regular_test": "npx jest tests/simclientserver.test.js"
+    "regular_test": "npx jest tests/simclientserver.test.js",
+    "clean": "node misc/clean.js"
   },
   "jest": {
     "verbose": true,
