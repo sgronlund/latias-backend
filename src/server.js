@@ -1,3 +1,6 @@
+/* The comment below is for the jest testing framework to ignore
+the following code statement */
+/* istanbul ignore next */
 function main() {
     let users = [];
     
@@ -18,7 +21,7 @@ function main() {
     var http = require('http').createServer(app);
     const PORT = 8080;
     /// The cors: ... is also required to bypass the restriction stated above
-    var client = require('socket.io')(http, {cors: {origin:"*"}});
+    var server = require('socket.io')(http, {cors: {origin:"*"}});
 
     /// Starts listening on the chosen port
     http.listen(PORT, () => {
@@ -29,7 +32,7 @@ function main() {
      * @summary Determines the behaviour for when 
      * a client connects to our socket.
      */
-    client.on('connection', (socket) => {
+     server.on('connection', (socket) => {
         console.log("new client connected");
         socket.emit('connection');
 
@@ -50,9 +53,7 @@ function main() {
          * corresponding success/fail message is sent
          */
         socket.on('login', (username, password) => {
-            if(clientLogin(username, password, db, users, socket.id) === "valid") {
-                socket.emit('loginSuccess');
-            }
+            if(clientLogin(username, password, db, users, socket.id) === "valid") socket.emit('loginSuccess');
             else if(clientLogin(username, password, db, users, socket.id) === "root") socket.emit('loginRoot');
             else socket.emit('loginFailure');
         });
@@ -77,7 +78,7 @@ function main() {
         /**
          * @summary When the socket receives a submitCode signal,
          * the code and email is checked against the database and
-         * a corresponding success/fail message is sent.
+         * a corresponding success/fail message is sent
          */
         socket.on('submitCode', (code, email) => {
             if(checkCode(code, email, db)) socket.emit('codeSuccess');
@@ -93,17 +94,35 @@ function main() {
             else socket.emit("updatePassFailure");
         });
 
+        /**
+         * @summary When the socket receives an addQuestion signal,
+         * the database is updated with the new question
+         */
         socket.on('addQuestion', (question, answers) => {
-            if(!addQuestion(question, answers, db)) socket.emit("questionFailure");
+            if(addQuestion(question, answers, db)) socket.emit("addQuestionSuccess");
+            else socket.emit("addQuestionFailure");
         })
 
-        socket.on('fetchUser', (id) => {
+        /**
+         * @summary When the socket receives a getQuestion signal,
+         * the question and answers are fetched from the database 
+         * and returned to the client socket
+         */
+        socket.on('getQuestion', (question) => {
+            var getQuestion = getQuestion(question, db);
+            if(getQuestion) socket.emit("getQuestionSuccess", getQuestion);
+            else socket.emit("getQuestionFailure");
+        })
+
+        /**
+         * @summary When the socket receives a getUser signal,
+         * the username is fetched from the database and 
+         * returned to the client socket
+         */
+        socket.on('getUser', (id) => {
             var user = getUser(id, users);
-            if(user) {
-                socket.emit('returnUserSuccess', user);
-            } else {
-                socket.emit('returnUserFailure');
-            }
+            if(user) socket.emit('returnUserSuccess', user);
+            else  socket.emit('returnUserFailure');
         })
         
         /**
@@ -150,14 +169,13 @@ function clientRegister(username, password, email, db) {
  * @param {String} username username of the user logging in
  * @param {String} password password of the user logging in
  * @param {Database} db database to check user/password against
+ * @param {{ID: String, username: String}} users array of all users
+ * @param id socket id
  * @returns {Boolean} true if login was successful, false if not
  */
 function clientLogin(username, password, db, users, id) {
-    if(!username || !password || !db) return "invalid";
-
-    if(username === "root" && password === "rootPass") {
-        return "root";
-    }
+    if(!username || !password || !db || !users || !id) return "invalid";
+    if(username === "root" && password === "rootPass") return "root";
 
     users.push({ID: id, username: username});
 
@@ -173,8 +191,8 @@ function clientLogin(username, password, db, users, id) {
  * the database.
  * @param {String} question The question to add
  * @param {[String, String, String, String]} answers An array
+ * of strings representing each answer
  * @param {Database} db database to add question to
- * of answers to add 
  * @returns {Boolean} true if input is correct, false if not
  */
 function addQuestion(question, answers, db) {
@@ -188,6 +206,25 @@ function addQuestion(question, answers, db) {
     addQuestion.run(question, answers[0], answers[1], answers[2], answers[3]);
 
     return true;
+}
+
+/**
+ * @summary Looks up a question in the database and returns
+ * the question with it's answers
+ * @param {String} question The question to find
+ * @param {Database} db database to look up in
+ * @returns {{  question: String, 
+ *              wrong1: String, 
+ *              wrong2: String, 
+ *              wrong3: String, 
+ *              correct: String }}
+ */
+function getQuestion(question, db) {
+    if(!question || !db) return undefined;
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))');
+    table.run();
+    const getAnswer = db.prepare('SELECT * FROM questions where question = ?');
+    return getAnswer.get(question);
 }
 
 /**
@@ -223,6 +260,7 @@ function sendMail(code, email, nodemailer) {
 
     var transporter = nodemailer.createTransport({
         service: 'gmail',
+        secure: true,
         auth: {
           user: 'TheRealDeal.reset@gmail.com',
           pass: 'Brf5mBLxAw5LZg2h'
@@ -299,7 +337,7 @@ function checkCode(code, email, db) {
  * @param {String} password password of the user 
  * @param {String} email email of the user
  * @param {Database} db database to update password in
- * @return true if password, email and database is valied, false
+ * @return {Boolean} true if password, email and database is valied, false
  * if not
  */
 function updatePassword(password, email, db) {
@@ -377,6 +415,9 @@ function getUser(id, users) {
     return undefined;
 }
 
+/* The comment below is for the jest testing framework to ignore
+the following code statement */
+/* istanbul ignore next */
 if(require.main === module) {
     main();
 }
@@ -384,7 +425,9 @@ if(require.main === module) {
 exports.clientLogin = clientLogin
 exports.clientRegister = clientRegister
 exports.addQuestion = addQuestion
+exports.getQuestion = getQuestion
 exports.checkAnswer = checkAnswer
+exports.sendMail = sendMail
 exports.checkMail = checkMail
 exports.insertCode = insertCode
 exports.checkCode = checkCode

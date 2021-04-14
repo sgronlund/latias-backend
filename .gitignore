@@ -1,3 +1,4 @@
+docs
 src/server/.db-journal
 node_modules/**/*
 package-lock.json
