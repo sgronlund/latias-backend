@@ -75,25 +75,24 @@ client.on('connection', (socket) => {
 });
 
 function clientRegister(username, password, email) {
-    const table = db.prepare('CREATE TABLE users (username varchar(255), password varchar(255), email varchar(255))');
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS login (username varchar(255), password varchar(255), email varchar(255))');
     table.run();
 
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? OR email = ?');
+    const checkUser = db.prepare('SELECT * FROM login WHERE username = ? OR email = ?');
     var user = checkUser.get(username, email);
 
     if(user !== undefined) return false; //If username is busy, return false
 
-    const addUser = db.prepare('INSERT INTO users (username, password, email) VALUES (?, ?, ?)');
+    const addUser = db.prepare('INSERT INTO login (username, password, email) VALUES (?, ?, ?)');
     addUser.run(username, password, email);
 
     return true;
 }
 
 function clientLogin(username, password) {
-    const table = db.prepare('CREATE TABLE IF NOT EXISTS users (username varchar(255), password varchar(255))');
+    const table = db.prepare('CREATE TABLE IF NOT EXISTS login (username varchar(255), password varchar(255), email varchar(255))');
     table.run();
-
-    const checkUser = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
+    const checkUser = db.prepare('SELECT * FROM login WHERE username = ? AND password = ?');
     var user = checkUser.get(username, password);
 
     return user !== undefined;
