@@ -94,17 +94,6 @@ function main() {
             if(!addQuestion(question, answers, db)) socket.emit("questionFailure");
         })
         
-        //TODO måste ha unika private och public keys för varje client. 
-        /*
-            var clients = [];
-            var private_keys = [];
-            var public_keys = [];
-
-            Dessa måste pushas med ny info direkt när en ny client connectar.
-
-            Möjligt problem med detta är att vi connectar så ofta, typ varje gång vi gör nånting. Vet inte 
-            hur socket beter sig när man connectar två gånger från samma client men olika sockets
-        */
 
         socket.on('start-key-exchange', () => {
             var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
@@ -113,6 +102,7 @@ function main() {
             var server_public_key = g.modPow(server_private_key,p);
             client.emit('server-public', Number(server_public_key), Number(g), Number(p));
         });
+        
         socket.on('client-public',(client_public_key) => {
             var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
             var g = bigInt(2579);
@@ -176,7 +166,7 @@ function clientLogin(username, password, db) {
     if(user) return "valid";
     else return "invalid";
 }
-
+/** 
  * @summary Adds a new question along with it's answers to
  * the database.
  * @param {String} question The question to add
