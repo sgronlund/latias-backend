@@ -1,5 +1,6 @@
 src/server/.db-journal
 node_modules/**/*
+package-lock.json
 src/node_modules/**/*
 src/.expo/*
 src/.vscode/*

@@ -1,0 +1,18 @@
+name: "Server tests"
+on: [pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install dependencies
+      run: |
+        cd src
+        npm install
+    - name: Run Tests
+      run: |
+        cd src
+        npm test
