@@ -1,7 +1,8 @@
 function main() {
     var app = require('express')();
     var nodemailer = require('nodemailer');
-
+    var bigInt = require('big-integer');
+    
     const Database = require('better-sqlite3');
     const db = new Database('database.db', { verbose: console.log });
 
@@ -93,6 +94,24 @@ function main() {
             if(!addQuestion(question, answers, db)) socket.emit("questionFailure");
         })
         
+
+        socket.on('start-key-exchange', () => {
+            var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+            var g = bigInt(2579);
+            var p = bigInt(5159);
+            var server_public_key = g.modPow(server_private_key,p);
+            client.emit('server-public', Number(server_public_key), Number(g), Number(p));
+        });
+        
+        socket.on('client-public',(client_public_key) => {
+            var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+            var g = bigInt(2579);
+            var p = bigInt(5159);
+            client_public_key = bigInt(client_public_key);
+            var shared_key = client_public_key.modPow(server_private_key,p);
+        });
+
+
         /**
          * @summary emits the current time left to every connected
          * client every second
@@ -130,12 +149,7 @@ function clientRegister(username, password, email, db) {
     return true;
 }
 
-/**
- * @summary Tries to login a user. If the username or
- * password does not match any user in the database, the
- * login will not be successful.
- * @param {String} username username of the user logging in
- * @param {String} password password of the user logging in
+/** 
  * @param {Database} db database to check user/password against
  * @returns true if login was successful, false if not
  */
@@ -152,8 +166,7 @@ function clientLogin(username, password, db) {
     if(user) return "valid";
     else return "invalid";
 }
-
-/**
+/** 
  * @summary Adds a new question along with it's answers to
  * the database.
  * @param {String} question The question to add
