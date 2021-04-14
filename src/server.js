@@ -97,22 +97,22 @@ function main() {
         })
         
 
-        socket.on('start-key-exchange', () => {
+        socket.on('startKeyExchange', () => {
             var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
             var g = bigInt(2579);
             var p = bigInt(5159);
             var server_public_key = g.modPow(server_private_key,p);
-            client.emit('server-public', Number(server_public_key), Number(g), Number(p));
+            client.emit('serverPublic', Number(server_public_key), Number(g), Number(p));
         });
         
-        socket.on('client-public',(client_public_key) => {
+        socket.on('clientPublic',(client_public_key) => {
             var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
             var g = bigInt(2579);
             var p = bigInt(5159);
             client_public_key = bigInt(client_public_key);
             
             var shared_key = client_public_key.modPow(server_private_key,p);
-            console.log(shared_key);
+            console.log("the established key: " + shared_key);
 
             clients.push({
                 id: socket.id,
