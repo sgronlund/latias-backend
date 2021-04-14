@@ -8,5 +8,7 @@ if (os.type() === "Windows_NT") {
   );
   //Linux/Mac
 } else if (os.type() === "Darwin" || os.type() == "Linux") {
-  exec("rm -f package-lock.json db_for_test.db db_for_stress_test.db && rm -rf node_modules ../docs/out ../docs/coverage");
+  exec(
+    "rm -f package-lock.json db_for_test.db db_for_stress_test.db && rm -rf node_modules ../docs/out ../docs/coverage"
+  );
 }

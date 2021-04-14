@@ -9,7 +9,8 @@
     "document": "jsdoc server.js -d ../docs/out",
     "stress_test": "npx jest tests/stresstests.test.js",
     "regular_test": "npx jest tests/simclientserver.test.js",
-    "clean": "node misc/clean.js"
+    "clean": "node misc/clean.js",
+    "format": "npx prettier --write ./**/*.js"
   },
   "jest": {
     "verbose": true,
