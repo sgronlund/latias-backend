@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
       "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
     );
     const tableQuestions = db.prepare(
-      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))"
+      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId varchar(255))"
     );
     tableUsers.run();
     tableQuestions.run();
@@ -197,6 +197,76 @@ describe("Test Suite for Server", () => {
     clientSocket.emit("addQuestionEmpty", "QUESTION", []);
   });
 
+  test("Add question with all answers as undefined", (done) => {
+    serverSocket.on("addQuestionAllUndefined", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionAllUndefined", "QUESTION", [
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  test("Add question with first answer as undefined", (done) => {
+    serverSocket.on("addQuestionFirstUndefined", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionFirstUndefined", "QUESTION", [
+      undefined,
+      "A",
+      "B",
+      "C",
+    ]);
+  });
+
+  test("Add question with second answer as undefined", (done) => {
+    serverSocket.on("addQuestionSecondUndefined", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionSecondUndefined", "QUESTION", [
+      "A",
+      undefined,
+      "B",
+      "C",
+    ]);
+  });
+
+  test("Add question with third answer as undefined", (done) => {
+    serverSocket.on("addQuestionThirdUndefined", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionThirdUndefined", "QUESTION", [
+      "A",
+      "B",
+      undefined,
+      "C",
+    ]);
+  });
+
+  test("Add question with fourth answer as undefined", (done) => {
+    serverSocket.on("addQuestionFourthUndefined", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionFourthUndefined", "QUESTION", [
+      "A",
+      "B",
+      "C",
+      undefined,
+    ]);
+  });
+
   test("Add question with too short answer array", (done) => {
     serverSocket.on("addQuestionShort", (question, answers) => {
       const operation = backend.addQuestion(question, answers, db);
@@ -207,17 +277,17 @@ describe("Test Suite for Server", () => {
   });
 
   test("Add question and check for it's existence", (done) => {
-    serverSocket.on("addQuestionExistence", (question, answers) => {
-      const operation = backend.addQuestion(question, answers, db);
+    serverSocket.on("addQuestionExistence", (question, answers, id) => {
+      const operation = backend.addQuestion(question, answers, db, id);
       expect(operation).toBeTruthy();
       done();
     });
-    clientSocket.emit("addQuestionExistence", "QUESTION", [
-      "FALSE1",
-      "FALSE2",
-      "FALSE3",
-      "CORRECT",
-    ]);
+    clientSocket.emit(
+      "addQuestionExistence",
+      "QUESTION",
+      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      "ID"
+    );
   });
 
   test("checkAnswer with null arguments", (done) => {
@@ -231,18 +301,18 @@ describe("Test Suite for Server", () => {
   });
 
   test("Add question and check with correct answer", (done) => {
-    serverSocket.on("correctAnswer", (question, answers) => {
-      backend.addQuestion(question, answers, db);
+    serverSocket.on("correctAnswer", (question, answers, id) => {
+      backend.addQuestion(question, answers, db, id);
       const check = backend.checkAnswer("QUESTION", "CORRECT", db);
       expect(check).toBeTruthy();
       done();
     });
-    clientSocket.emit("correctAnswer", "QUESTION", [
-      "FALSE1",
-      "FALSE2",
-      "FALSE3",
-      "CORRECT",
-    ]);
+    clientSocket.emit(
+      "correctAnswer",
+      "QUESTION",
+      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      "ID"
+    );
   });
 
   test("Add question and check with wrong answer", (done) => {
@@ -276,40 +346,51 @@ describe("Test Suite for Server", () => {
     clientSocket.emit("sendMailInvalid", "test", "NOTMAIL");
   });
 
-  test("Try getting question with question as null", (done) => {
-    serverSocket.on("getQuestionNull", (question) => {
-      const getQuestion = backend.getQuestion(question, db);
+  test("Try getting question with ID as null", (done) => {
+    serverSocket.on("getQuestionNullID", (question, id) => {
+      const getQuestion = backend.getQuestion(question, db, id);
       expect(getQuestion).toBeUndefined();
       done();
     });
-    clientSocket.emit("getQuestionNull");
+    clientSocket.emit("getQuestionNullID", "QUESTION", undefined);
+  });
+
+  test("Try getting question with question as null", (done) => {
+    serverSocket.on("getQuestionNullQuestion", (question, id) => {
+      const getQuestion = backend.getQuestion(question, db, id);
+      expect(getQuestion).toBeUndefined();
+      done();
+    });
+    clientSocket.emit("getQuestionNullQuestion", undefined, "ID");
   });
 
   test("Try getting question that does not exist", (done) => {
-    serverSocket.on("getQuestionNotExist", (question) => {
-      const getQuestion = backend.getQuestion(question, db);
+    serverSocket.on("getQuestionNotExist", (question, id) => {
+      const getQuestion = backend.getQuestion(question, db, id);
       expect(getQuestion).toBeUndefined();
       done();
     });
-    clientSocket.emit("getQuestionNotExist", "QUESTION");
+    clientSocket.emit("getQuestionNotExist", "QUESTION", "ID");
   });
 
   test("Get existing question", (done) => {
-    serverSocket.on("getQuestion", (question) => {
+    serverSocket.on("getQuestion", (question, id) => {
       expect(
         backend.addQuestion(
           "QUESTION",
           ["FALSE", "FALSE", "FALSE", "CORRECT"],
-          db
+          db,
+          "ID"
         )
       ).toBeTruthy();
-      const getQuestion = backend.getQuestion(question, db);
+      const getQuestion = backend.getQuestion(question, db, "ID");
       expect(getQuestion).toEqual({
         correct: "CORRECT",
         question: "QUESTION",
         wrong1: "FALSE",
         wrong2: "FALSE",
         wrong3: "FALSE",
+        quizId: "ID",
       });
       done();
     });
