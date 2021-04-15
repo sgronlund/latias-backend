@@ -241,12 +241,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionAllUndefined", "QUESTION", [
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-    ], 1);
+    clientSocket.emit(
+      "addQuestionAllUndefined",
+      "QUESTION",
+      [undefined, undefined, undefined, undefined],
+      1
+    );
   });
 
   test("Add question with first answer as undefined", (done) => {
@@ -255,12 +255,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionFirstUndefined", "QUESTION", [
-      undefined,
-      "A",
-      "B",
-      "C",
-    ], 1);
+    clientSocket.emit(
+      "addQuestionFirstUndefined",
+      "QUESTION",
+      [undefined, "A", "B", "C"],
+      1
+    );
   });
 
   test("Add question with second answer as undefined", (done) => {
@@ -269,12 +269,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionSecondUndefined", "QUESTION", [
-      "A",
-      undefined,
-      "B",
-      "C",
-    ], 1);
+    clientSocket.emit(
+      "addQuestionSecondUndefined",
+      "QUESTION",
+      ["A", undefined, "B", "C"],
+      1
+    );
   });
 
   test("Add question with third answer as undefined", (done) => {
@@ -283,12 +283,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionThirdUndefined", "QUESTION", [
-      "A",
-      "B",
-      undefined,
-      "C",
-    ], 1);
+    clientSocket.emit(
+      "addQuestionThirdUndefined",
+      "QUESTION",
+      ["A", "B", undefined, "C"],
+      1
+    );
   });
 
   test("Add question with fourth answer as undefined", (done) => {
@@ -297,12 +297,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionFourthUndefined", "QUESTION", [
-      "A",
-      "B",
-      "C",
-      undefined,
-    ],1);
+    clientSocket.emit(
+      "addQuestionFourthUndefined",
+      "QUESTION",
+      ["A", "B", "C", undefined],
+      1
+    );
   });
 
   test("Add question with too short answer array", (done) => {
@@ -324,7 +324,7 @@ describe("Test Suite for Server", () => {
       "addQuestionExistence",
       "QUESTION",
       ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
-      faker.datatype.number({min:1, max:52})
+      faker.datatype.number({ min: 1, max: 52 })
     );
   });
 
@@ -349,9 +349,8 @@ describe("Test Suite for Server", () => {
       "correctAnswer",
       "QUESTION",
       ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
-      faker.datatype.number({min:1, max:52})
+      faker.datatype.number({ min: 1, max: 52 })
     );
-    
   });
 
   test("Add question and check with wrong answer", (done) => {
@@ -361,12 +360,12 @@ describe("Test Suite for Server", () => {
       expect(check).toBeFalsy();
       done();
     });
-    clientSocket.emit("wrongAnswer", "QUESTION", [
-      "FALSE1",
-      "FALSE2",
-      "FALSE3",
-      "CORRECT",
-    ], faker.datatype.number({min:1, max:52}));
+    clientSocket.emit(
+      "wrongAnswer",
+      "QUESTION",
+      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      faker.datatype.number({ min: 1, max: 52 })
+    );
   });
 
   test("sendMail with null arguments", (done) => {
@@ -400,7 +399,11 @@ describe("Test Suite for Server", () => {
       expect(getQuestion).toBeUndefined();
       done();
     });
-    clientSocket.emit("getQuestionNullQuestion", undefined, faker.datatype.number({min:1, max:52}))
+    clientSocket.emit(
+      "getQuestionNullQuestion",
+      undefined,
+      faker.datatype.number({ min: 1, max: 52 })
+    );
   });
 
   test("Try getting question that does not exist", (done) => {
@@ -409,7 +412,11 @@ describe("Test Suite for Server", () => {
       expect(getQuestion).toBeUndefined();
       done();
     });
-    clientSocket.emit("getQuestionNotExist", "QUESTION", faker.datatype.number({min:1, max:52}));
+    clientSocket.emit(
+      "getQuestionNotExist",
+      "QUESTION",
+      faker.datatype.number({ min: 1, max: 52 })
+    );
   });
 
   test("Get existing question", (done) => {
@@ -433,22 +440,24 @@ describe("Test Suite for Server", () => {
       });
       done();
     });
-    clientSocket.emit("getQuestion", "QUESTION", faker.datatype.number({min:1, max:52}));
+    clientSocket.emit(
+      "getQuestion",
+      "QUESTION",
+      faker.datatype.number({ min: 1, max: 52 })
+    );
   });
 
   test("Add question with invalid week number", (done) => {
     serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
-      expect(
-        backend.addQuestion(
-          question,
-          answers,
-          db,
-          id
-        )
-      ).toBeFalsy();
+      expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();
       done();
     });
-    clientSocket.emit("getQuestionInvalidWeek", "QUESTION", ["FALSE", "FALSE", "FALSE", "CORRECT"], faker.datatype.number({min:53, max:1000}));
+    clientSocket.emit(
+      "getQuestionInvalidWeek",
+      "QUESTION",
+      ["FALSE", "FALSE", "FALSE", "CORRECT"],
+      faker.datatype.number({ min: 53, max: 1000 })
+    );
   });
 
   test("Register user, login and fetch the username", (done) => {
