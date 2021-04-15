@@ -203,7 +203,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", [undefined, undefined , undefined, undefined]);
+    clientSocket.emit("addQuestionEmpty", "QUESTION", [
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
   });
 
   test("Add question with first answer as undefined", (done) => {
@@ -212,7 +217,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", [undefined, "A" , "B", "C"]);
+    clientSocket.emit("addQuestionEmpty", "QUESTION", [
+      undefined,
+      "A",
+      "B",
+      "C",
+    ]);
   });
 
   test("Add question with second answer as undefined", (done) => {
@@ -221,7 +231,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", undefined, "B", "C"]);
+    clientSocket.emit("addQuestionEmpty", "QUESTION", [
+      "A",
+      undefined,
+      "B",
+      "C",
+    ]);
   });
 
   test("Add question with third answer as undefined", (done) => {
@@ -230,7 +245,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", "B", undefined, "C"]);
+    clientSocket.emit("addQuestionEmpty", "QUESTION", [
+      "A",
+      "B",
+      undefined,
+      "C",
+    ]);
   });
 
   test("Add question with fourth answer as undefined", (done) => {
@@ -239,7 +259,12 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", "B", "C", undefined]);
+    clientSocket.emit("addQuestionEmpty", "QUESTION", [
+      "A",
+      "B",
+      "C",
+      undefined,
+    ]);
   });
 
   test("Add question with too short answer array", (done) => {
