@@ -197,6 +197,51 @@ describe("Test Suite for Server", () => {
     clientSocket.emit("addQuestionEmpty", "QUESTION", []);
   });
 
+  test("Add question with all answers as undefined", (done) => {
+    serverSocket.on("addQuestionEmpty", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionEmpty", "QUESTION", [undefined, undefined , undefined, undefined]);
+  });
+
+  test("Add question with first answer as undefined", (done) => {
+    serverSocket.on("addQuestionEmpty", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionEmpty", "QUESTION", [undefined, "A" , "B", "C"]);
+  });
+
+  test("Add question with second answer as undefined", (done) => {
+    serverSocket.on("addQuestionEmpty", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", undefined, "B", "C"]);
+  });
+
+  test("Add question with third answer as undefined", (done) => {
+    serverSocket.on("addQuestionEmpty", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", "B", undefined, "C"]);
+  });
+
+  test("Add question with fourth answer as undefined", (done) => {
+    serverSocket.on("addQuestionEmpty", (question, answers) => {
+      const operation = backend.addQuestion(question, answers, db);
+      expect(operation).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", "B", "C", undefined]);
+  });
+
   test("Add question with too short answer array", (done) => {
     serverSocket.on("addQuestionShort", (question, answers) => {
       const operation = backend.addQuestion(question, answers, db);

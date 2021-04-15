@@ -223,13 +223,20 @@ function clientLogin(username, password, db, users, id) {
  * @returns {Boolean} true if input is correct, false if not
  */
 function addQuestion(question, answers, db) {
-  if (!question || !answers || !db) return false;
+  if (!question || !answers || !answers[0] || !answers[1] || !answers[2] || !answers[3] || !db) return false;
   if (answers.length !== 4) return false;
 
   const table = db.prepare(
     "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))"
   );
   table.run();
+
+  const checkQuestion = db.prepare(
+    "SELECT * FROM questions WHERE question = ?"
+  );
+  var questionExists = checkQuestion.get(question);
+
+  if (questionExists) return false;
 
   const addQuestion = db.prepare(
     "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct) VALUES (?, ?, ?, ?, ?)"
