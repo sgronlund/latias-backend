@@ -251,14 +251,14 @@ function clientLogout(id, users) {
  * @param {String} question The question to add
  * @param {[String, String, String, String]} answers An array
  * of strings representing each answer
- * @param {String} quizId id of the quiz
+ * @param {Integer} quizId id of the quiz
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
 function addQuestion(question, answers, db, quizId) {
   if (!question || !answers || answers.includes(undefined) || !quizId || !db) return false;
   if (answers.length !== 4) return false;
-  if (quizId > 52 || quizId < 1) return false;
+  if ( typeof quizId !== 'number' || quizId > 52 || quizId < 1) return false;
 
   const table = db.prepare(
     "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
