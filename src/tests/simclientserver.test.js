@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
       "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
     );
     const tableQuestions = db.prepare(
-      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId varchar(255))"
+      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
     );
     tableUsers.run();
     tableQuestions.run();
@@ -418,21 +418,36 @@ describe("Test Suite for Server", () => {
           "QUESTION",
           ["FALSE", "FALSE", "FALSE", "CORRECT"],
           db,
-          "ID"
+          id
         )
       ).toBeTruthy();
-      const getQuestion = backend.getQuestion(question, db, "ID");
+      const getQuestion = backend.getQuestion(question, db, id);
       expect(getQuestion).toEqual({
         correct: "CORRECT",
         question: "QUESTION",
         wrong1: "FALSE",
         wrong2: "FALSE",
         wrong3: "FALSE",
-        quizId: "ID",
+        quizId: id,
       });
       done();
     });
-    clientSocket.emit("getQuestion", "QUESTION");
+    clientSocket.emit("getQuestion", "QUESTION", 1);
+  });
+
+  test("Add question with invalid week number", (done) => {
+    serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
+      expect(
+        backend.addQuestion(
+          question,
+          answers,
+          db,
+          id
+        )
+      ).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("getQuestionInvalidWeek", "QUESTION", ["FALSE", "FALSE", "FALSE", "CORRECT"], -100);
   });
 
   test("Register user, login and fetch the username", (done) => {

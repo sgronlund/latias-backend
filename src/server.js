@@ -258,11 +258,10 @@ function clientLogout(id, users) {
 function addQuestion(question, answers, db, quizId) {
   if (!question || !answers || answers.includes(undefined) || !quizId || !db) return false;
   if (answers.length !== 4) return false;
-  //TODO: make quizId int (now it's a string)
-  //if (quizId > 52 || quizId < 1) return false;
+  if (quizId > 52 || quizId < 1) return false;
 
   const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId varchar(255))"
+    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
   );
   table.run();
 
