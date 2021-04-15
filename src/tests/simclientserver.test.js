@@ -198,48 +198,48 @@ describe("Test Suite for Server", () => {
   });
 
   test("Add question with all answers as undefined", (done) => {
-    serverSocket.on("addQuestionEmpty", (question, answers) => {
+    serverSocket.on("addQuestionAllUndefined", (question, answers) => {
       const operation = backend.addQuestion(question, answers, db);
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", [undefined, undefined , undefined, undefined]);
+    clientSocket.emit("addQuestionAllUndefined", "QUESTION", [undefined, undefined , undefined, undefined]);
   });
 
   test("Add question with first answer as undefined", (done) => {
-    serverSocket.on("addQuestionEmpty", (question, answers) => {
+    serverSocket.on("addQuestionFirstUndefined", (question, answers) => {
       const operation = backend.addQuestion(question, answers, db);
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", [undefined, "A" , "B", "C"]);
+    clientSocket.emit("addQuestionFirstUndefined", "QUESTION", [undefined, "A" , "B", "C"]);
   });
 
   test("Add question with second answer as undefined", (done) => {
-    serverSocket.on("addQuestionEmpty", (question, answers) => {
+    serverSocket.on("addQuestionSecondUndefined", (question, answers) => {
       const operation = backend.addQuestion(question, answers, db);
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", undefined, "B", "C"]);
+    clientSocket.emit("addQuestionSecondUndefined", "QUESTION", ["A", undefined, "B", "C"]);
   });
 
   test("Add question with third answer as undefined", (done) => {
-    serverSocket.on("addQuestionEmpty", (question, answers) => {
+    serverSocket.on("addQuestionThirdUndefined", (question, answers) => {
       const operation = backend.addQuestion(question, answers, db);
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", "B", undefined, "C"]);
+    clientSocket.emit("addQuestionThirdUndefined", "QUESTION", ["A", "B", undefined, "C"]);
   });
 
   test("Add question with fourth answer as undefined", (done) => {
-    serverSocket.on("addQuestionEmpty", (question, answers) => {
+    serverSocket.on("addQuestionFourthUndefined", (question, answers) => {
       const operation = backend.addQuestion(question, answers, db);
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionEmpty", "QUESTION", ["A", "B", "C", undefined]);
+    clientSocket.emit("addQuestionFourthUndefined", "QUESTION", ["A", "B", "C", undefined]);
   });
 
   test("Add question with too short answer array", (done) => {
