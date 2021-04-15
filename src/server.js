@@ -102,8 +102,8 @@ function main() {
      * @summary When the socket receives an addQuestion signal,
      * the database is updated with the new question
      */
-    socket.on("addQuestion", (question, answers) => {
-      if (addQuestion(question, answers, db)) socket.emit("addQuestionSuccess");
+    socket.on("addQuestion", (question, answers, quizId) => {
+      if (addQuestion(question, answers, db, quizId)) socket.emit("addQuestionSuccess");
       else socket.emit("addQuestionFailure");
     });
 
@@ -112,8 +112,8 @@ function main() {
      * the question and answers are fetched from the database
      * and returned to the client socket
      */
-    socket.on("getQuestion", (question) => {
-      var getQuestion = getQuestion(question, db);
+    socket.on("getQuestion", (question, quizId) => {
+      var getQuestion = getQuestion(question, db, quizId);
       if (getQuestion) socket.emit("getQuestionSuccess", getQuestion);
       else socket.emit("getQuestionFailure");
     });
@@ -219,15 +219,16 @@ function clientLogin(username, password, db, users, id) {
  * @param {String} question The question to add
  * @param {[String, String, String, String]} answers An array
  * of strings representing each answer
+ * @param {String} quizId id of the quiz
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
-function addQuestion(question, answers, db) {
-  if (!question || !answers || !answers[0] || !answers[1] || !answers[2] || !answers[3] || !db) return false;
+function addQuestion(question, answers, db, quizId) {
+  if (!question || !answers || answers.includes(undefined) || !quizId || !db) return false;
   if (answers.length !== 4) return false;
 
   const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))"
+    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId varchar(255))"
   );
   table.run();
 
@@ -239,9 +240,9 @@ function addQuestion(question, answers, db) {
   if (questionExists) return false;
 
   const addQuestion = db.prepare(
-    "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct) VALUES (?, ?, ?, ?, ?)"
+    "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, quizId) VALUES (?, ?, ?, ?, ?, ?)"
   );
-  addQuestion.run(question, answers[0], answers[1], answers[2], answers[3]);
+  addQuestion.run(question, answers[0], answers[1], answers[2], answers[3], quizId);
 
   return true;
 }
@@ -257,14 +258,16 @@ function addQuestion(question, answers, db) {
  *              wrong3: String,
  *              correct: String }}
  */
-function getQuestion(question, db) {
+function getQuestion(question, db, quizId) {
   if (!question || !db) return undefined;
   const table = db.prepare(
     "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))"
   );
   table.run();
-  const getAnswer = db.prepare("SELECT * FROM questions where question = ?");
-  return getAnswer.get(question);
+  const getAnswer = db.prepare("SELECT * FROM questions where question = ? AND quizId = ?");
+
+  //This will return undefined if get() does not find any row, which means we don't have to check it manually
+  return getAnswer.get(question, quizId);
 }
 
 /**
