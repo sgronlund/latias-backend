@@ -123,6 +123,52 @@ describe("Test Suite for Server", () => {
     );
   });
 
+  test("Login as root", (done) => {
+    serverSocket.on("loginRoot", (user, pass, id, users) => {
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe("root");
+      done();
+    });
+    clientSocket.emit("loginRoot", "root", "rootPass", clientSocket.id, users);
+  });
+
+  test("Logout with socket id value undefined", (done) => {
+    serverSocket.on("logoutUndefined", (id) => {
+      const logout = backend.clientLogout(id, users);
+      expect(logout).toBeFalsy();
+      done();
+    });
+    var user = faker.internet.userName();
+    clientSocket.emit("logoutUndefined", undefined);
+  });
+
+  test("Logout with socket id not matching any user", (done) => {
+    serverSocket.on("logoutNonExisting", (id) => {
+      const logout = backend.clientLogout(id, users);
+      expect(logout).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("logoutNonExisting", clientSocket.id);
+  });
+
+  test("Register user, log in, log out and check that user is removed from users", (done) => {
+    serverSocket.on("register6", (user, pass, email, id) => {
+      const register = backend.clientRegister(user, pass, email, db);
+      expect(register).toBeTruthy();
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe("valid");
+    });
+    serverSocket.on("logout", (id, user) => {
+      const logout = backend.clientLogout(id, users);
+      expect(logout).toBeTruthy();
+      expect(users.includes(user)).toBeFalsy();
+      done();
+    });
+    var user = faker.internet.userName();
+    var pass = faker.internet.password();
+    var email = faker.internet.exampleEmail();
+    clientSocket.emit("register6", user, pass, email, clientSocket.id);
+    clientSocket.emit("logout", clientSocket.id, user);
+  });
+
   test("Register user and try register user with same username", (done) => {
     serverSocket.on("doubleRegister", (user, pass1, pass2, email1, email2) => {
       const register1 = backend.clientRegister(user, pass1, email1, db);
@@ -137,14 +183,6 @@ describe("Test Suite for Server", () => {
     var email1 = faker.internet.exampleEmail();
     var email2 = faker.internet.exampleEmail();
     clientSocket.emit("doubleRegister", username, pass1, pass2, email1, email2);
-  });
-
-  test("Login as root", (done) => {
-    serverSocket.on("loginRoot", (user, pass, id, users) => {
-      expect(backend.clientLogin(user, pass, db, users, id)).toBe("root");
-      done();
-    });
-    clientSocket.emit("loginRoot", "root", "rootPass", clientSocket.id, users);
   });
 
   test("Register root", (done) => {
