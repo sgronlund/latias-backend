@@ -282,11 +282,10 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeTruthy();
       done();
     });
-    clientSocket.emit("addQuestionExistence", "QUESTION", [
-      "FALSE1",
-      "FALSE2",
-      "FALSE3",
-      "CORRECT"],
+    clientSocket.emit(
+      "addQuestionExistence",
+      "QUESTION",
+      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
       "ID"
     );
   });
@@ -308,11 +307,10 @@ describe("Test Suite for Server", () => {
       expect(check).toBeTruthy();
       done();
     });
-    clientSocket.emit("correctAnswer", "QUESTION", [
-      "FALSE1",
-      "FALSE2",
-      "FALSE3",
-      "CORRECT"],
+    clientSocket.emit(
+      "correctAnswer",
+      "QUESTION",
+      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
       "ID"
     );
   });
@@ -381,7 +379,8 @@ describe("Test Suite for Server", () => {
         backend.addQuestion(
           "QUESTION",
           ["FALSE", "FALSE", "FALSE", "CORRECT"],
-          db, "ID"
+          db,
+          "ID"
         )
       ).toBeTruthy();
       const getQuestion = backend.getQuestion(question, db, "ID");
@@ -391,7 +390,7 @@ describe("Test Suite for Server", () => {
         wrong1: "FALSE",
         wrong2: "FALSE",
         wrong3: "FALSE",
-        quizId: "ID"
+        quizId: "ID",
       });
       done();
     });
