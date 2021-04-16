@@ -54,10 +54,10 @@ function main() {
      * the username and password is checked and a
      * corresponding success/fail message is sent
      */
-    socket.on("login", (username, password) => {
-      if (clientLogin(username, password, db, users, socket.id) === "valid")
+    socket.on("login", (username, password, id) => {
+      if (clientLogin(username, password, db, users, id) === "valid")
         socket.emit("loginSuccess");
-      else if (clientLogin(username, password, db, users, socket.id) === "root")
+      else if (clientLogin(username, password, db, users, id) === "root")
         socket.emit("loginRoot");
       else socket.emit("loginFailure");
     });
@@ -68,8 +68,8 @@ function main() {
      * if it does, logs out user and sends a success message,
      * otherwise failure message
      */
-     socket.on("logout", () => {
-      if (clientLogout(socket.id, users) === "valid") socket.emit("logoutSuccess");
+     socket.on("logout", (id) => {
+      if (clientLogout(id, users)) socket.emit("logoutSuccess");
       else socket.emit("logoutFailure");
     });
 
