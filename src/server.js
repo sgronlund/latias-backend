@@ -63,6 +63,17 @@ function main() {
     });
 
     /**
+     * @summary When the socket receives a logout signal,
+     * a check is made if the socket id matches a user and
+     * if it does, logs out user and sends a success message,
+     * otherwise failure message
+     */
+     socket.on("logout", () => {
+      if (clientLogout(socket.id, users) === "valid") socket.emit("logoutSuccess");
+      else socket.emit("logoutFailure");
+    });
+
+    /**
      * @summary When the socket receives a resetPass signal,
      * the mail is checked in the database and a corresponding
      * success/fail message is sent. If successful, a code is
@@ -194,9 +205,10 @@ function clientRegister(username, password, email, db) {
 }
 
 /**
+ * @summary logs in a user
  * @param {Database} db database to check user/password against
  * @param {{ID: String, username: String}} users array of all users
- * @param id socket id
+ * @param {String} id socket id
  * @returns {Boolean} true if login was successful, false if not
  */
 function clientLogin(username, password, db, users, id) {
@@ -213,22 +225,43 @@ function clientLogin(username, password, db, users, id) {
   if (user) return "valid";
   else return "invalid";
 }
+
+/**
+ * @summary logs out a user given a socket id
+ * @param {String} id socket id 
+ * @returns {Boolean} true if client was found, false if not
+ */
+function clientLogout(id, users) {
+  if(!id || !users) return false;
+
+  /* We could use the getUser() function here but we need 
+  the index for removing the user from the array */ 
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].ID === id) {
+      users.splice(i, 1);
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * @summary Adds a new question along with it's answers to
  * the database.
  * @param {String} question The question to add
  * @param {[String, String, String, String]} answers An array
  * of strings representing each answer
- * @param {String} quizId id of the quiz
+ * @param {Integer} quizId id of the quiz
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
 function addQuestion(question, answers, db, quizId) {
   if (!question || !answers || answers.includes(undefined) || !quizId || !db) return false;
   if (answers.length !== 4) return false;
+  if ( typeof quizId !== 'number' || quizId > 52 || quizId < 1) return false;
 
   const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId varchar(255))"
+    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
   );
   table.run();
 
@@ -485,6 +518,7 @@ if (require.main === module) {
 
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
+exports.clientLogout = clientLogout;
 exports.addQuestion = addQuestion;
 exports.getQuestion = getQuestion;
 exports.checkAnswer = checkAnswer;

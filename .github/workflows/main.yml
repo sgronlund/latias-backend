@@ -1,4 +1,4 @@
-name: "format"
+name: "Server tests"
 on: 
   push:
     branches:
@@ -14,18 +14,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.head_ref }}
     - name: Install dependencies
       run: |
         cd src
         npm install
-    - name: Format
+    - name: Run Tests
       run: |
         cd src
-        npm run format
-    - name: Commit changes
-      uses: stefanzweifel/git-auto-commit-action@v4.1.2
-      with:
-        commit_message: Formatted code using prettier
-        branch: ${{ github.head_ref }}
+        npm test
