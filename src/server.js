@@ -2,6 +2,7 @@ function main() {
     var app = require('express')();
     var nodemailer = require('nodemailer');
     var bigInt = require('big-integer');
+    var aes256 = require('aes256');
     
     const Database = require('better-sqlite3');
     const db = new Database('database.db', { verbose: console.log });
@@ -39,7 +40,6 @@ function main() {
          * the username, password and email is checked and a
          * corresponding success/fail message is sent
          */
-      
         socket.on('register', (username, password, email) => {
             if(clientRegister(username, password, email, db)) socket.emit('registerSuccess');
             else socket.emit('registerFailure');
@@ -120,6 +120,16 @@ function main() {
             });
         });
 
+        socket.on('testEncrypt', (encryptedMsg) => {
+            var sharedKey;
+            for(cli of clients) {
+                if(cli.id == socket.id) sharedKey = cli.key;
+            }
+            console.log(sharedKey.toString());
+            var msg = aes256.decrypt(sharedKey.toString(), encryptedMsg);
+
+            console.log(msg);
+        })
 
         /**
          * @summary emits the current time left to every connected
