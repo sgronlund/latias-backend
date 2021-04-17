@@ -1,6 +1,6 @@
 const { createServer } = require("http");
 const { express } = require("express")();
-const backend = require("../server");
+const backend = require("../backend");
 const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require("better-sqlite3");
