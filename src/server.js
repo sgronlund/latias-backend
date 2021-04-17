@@ -35,11 +35,6 @@ server.on("connection", (socket) => {
   console.log("new client connected");
   socket.emit("connection");
 
-  /**
-   * @summary When the socket receives a register signal,
-   * the username, password and email is checked and a
-   * corresponding success/fail message is sent
-   */
 
   socket.on("register", (username, password, email) => {
     if (backend.clientRegister(username, password, email, db))
@@ -173,3 +168,17 @@ server.on("connection", (socket) => {
   }, 1000);
 });
 
+exports.clientLogin = clientLogin;
+exports.clientRegister = clientRegister;
+exports.clientLogout = clientLogout;
+exports.addQuestion = addQuestion;
+exports.getQuestion = getQuestion;
+exports.checkAnswer = checkAnswer;
+exports.sendMail = sendMail;
+exports.checkMail = checkMail;
+exports.insertCode = insertCode;
+exports.checkCode = checkCode;
+exports.updatePassword = updatePassword;
+exports.generateCode = generateCode;
+exports.stringifySeconds = stringifySeconds;
+exports.getUser = getUser;
