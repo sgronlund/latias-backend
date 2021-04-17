@@ -321,4 +321,3 @@
   exports.generateCode = generateCode;
   exports.stringifySeconds = stringifySeconds;
   exports.getUser = getUser;
-  exports.counter = counter
