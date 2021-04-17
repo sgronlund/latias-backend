@@ -254,21 +254,7 @@
     return mail !== undefined;
   }
   
-  /**
-   * @summary This code is ran every 1000ms and counts down
-   * from 604800 seconds down to 0
-   */
-  var counter = 604800;
-  var countDown = setInterval(function () {
-    counter--;
-    if (counter === 0) {
-      counter = 604800;
-      //TODO: Send question to clients
-      //TODO: Reset questions table
-      console.log("counter done");
-      clearInterval(countDown);
-    }
-  }, 1000);
+  
   
   /**
    * @summary Converts seconds to days, hours, minutes and
