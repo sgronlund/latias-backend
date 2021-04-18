@@ -1,6 +1,6 @@
 const { createServer } = require("http");
 const { express } = require("express")();
-const backend = require("../server");
+const backend = require("../backend");
 const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require("better-sqlite3");
@@ -10,7 +10,7 @@ describe("Test Suite for Server", () => {
   let io, serverSocket, clientSocket, db, users;
 
   beforeAll((done) => {
-    db = new Database("db_for_test.db");
+    db = new Database("./tests/db_for_test.db");
     const httpServer = createServer(express);
     io = require("socket.io")(httpServer, { cors: { origin: "*" } });
     httpServer.listen(() => {

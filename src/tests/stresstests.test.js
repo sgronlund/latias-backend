@@ -1,6 +1,6 @@
 const { createServer } = require("http");
 const { express } = require("express")();
-const backend = require("../server");
+const backend = require("../backend");
 const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require("better-sqlite3");
@@ -9,7 +9,7 @@ describe("Stress testing", () => {
   let io, serverSocket, clientSocket, db, users;
 
   beforeAll((done) => {
-    db = new Database("db_for_stress_test.db");
+    db = new Database("./tests/db_for_stress_test.db");
     const table = db.prepare(
       "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
     );
