@@ -199,6 +199,62 @@ describe("Test Suite for Server", () => {
     );
   });
 
+  test("Register with two @'s in email", (done) => {
+    serverSocket.on("registerTwo@", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db);
+      expect(register).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "registerTwo@",
+      faker.internet.userName(),
+      faker.internet.password(),
+      "foo@bar@foo.bar"
+    );
+  });
+
+  test("Register with no ending dot in email", (done) => {
+    serverSocket.on("registerNoEnding", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db);
+      expect(register).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "registerNoEnding",
+      faker.internet.userName(),
+      faker.internet.password(),
+      "foo@bar"
+    );
+  });
+
+  test("Register with only one word as email", (done) => {
+    serverSocket.on("registerOnlyOneWord", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db);
+      expect(register).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "registerOnlyOneWord",
+      faker.internet.userName(),
+      faker.internet.password(),
+      "foo"
+    );
+  });
+
+  test("Register with no @'s in email", (done) => {
+    serverSocket.on("registerNo@", (user, pass, email) => {
+      const register = backend.clientRegister(user, pass, email, db);
+      expect(register).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "registerNo@",
+      faker.internet.userName(),
+      faker.internet.password(),
+      "foo.bar"
+    );
+  });
+
   test("Register with username, password and email as null", (done) => {
     serverSocket.on("detailsNull", (user, pass, email) => {
       const register = backend.clientRegister(user, pass, email, db);
@@ -322,6 +378,22 @@ describe("Test Suite for Server", () => {
     });
     clientSocket.emit(
       "addQuestionExistence",
+      "QUESTION",
+      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      faker.datatype.number({ min: 1, max: 52 })
+    );
+  });
+
+  test("Try adding question that already exists", (done) => {
+    serverSocket.on("addQuestionBusy", (question, answers, id) => {
+      const operation = backend.addQuestion(question, answers, db, id);
+      const operationBusy = backend.addQuestion(question, answers, db, id);
+      expect(operation).toBeTruthy();
+      expect(operationBusy).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "addQuestionBusy",
       "QUESTION",
       ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
       faker.datatype.number({ min: 1, max: 52 })

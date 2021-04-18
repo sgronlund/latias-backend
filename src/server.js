@@ -54,10 +54,10 @@ function main() {
      * the username and password is checked and a
      * corresponding success/fail message is sent
      */
-    socket.on("login", (username, password) => {
-      if (clientLogin(username, password, db, users, socket.id) === "valid")
+    socket.on("login", (username, password, id) => {
+      if (clientLogin(username, password, db, users, id) === "valid")
         socket.emit("loginSuccess");
-      else if (clientLogin(username, password, db, users, socket.id) === "root")
+      else if (clientLogin(username, password, db, users, id) === "root")
         socket.emit("loginRoot");
       else socket.emit("loginFailure");
     });
@@ -68,8 +68,8 @@ function main() {
      * if it does, logs out user and sends a success message,
      * otherwise failure message
      */
-     socket.on("logout", () => {
-      if (clientLogout(socket.id, users) === "valid") socket.emit("logoutSuccess");
+     socket.on("logout", (id) => {
+      if (clientLogout(id, users)) socket.emit("logoutSuccess");
       else socket.emit("logoutFailure");
     });
 
@@ -182,8 +182,17 @@ function main() {
  * @returns {Boolean} true if register was successful, false if not
  */
 function clientRegister(username, password, email, db) {
+  //TODO: Should update returns to return more than two values. One for success,
+  //one for invalid email input, one for trying to login as root and one for
+  //invalid input
+
+  //Checks that the mail consists of (symbols)@(symbols).(symbols) 
+  //where symbols are a-z or A-Z or 0-9 (+ some extra symbols)
+  let mailRegex = new RegExp(/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/);
+
   if (!username || !password || !email || !db) return false;
-  if (username === "root") return false; //TODO: return something else and emit to user
+  if (username === "root") return false;
+  if(!mailRegex.test(email)) return false; 
   //This should only be necessary while testing as the table SHOULD exist already
   const table = db.prepare(
     "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
@@ -402,6 +411,7 @@ function insertCode(code, email, db) {
  * @returns {Boolean} true if code matches, false if not
  */
 function checkCode(code, email, db) {
+  console.log(code, email, db);
   if (!code || !email || !db) return false;
 
   const checkCode = db.prepare(
