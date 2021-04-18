@@ -519,6 +519,114 @@ describe("Test Suite for Server", () => {
     );
   });
 
+  test("Try getting questions when there are none for the given week", (done) => {
+    serverSocket.on("getQuestionsNotExist", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionsNotExist",
+      faker.datatype.number({ min: 1, max: 52 })
+    );
+  })
+
+  test("Try getting questions when weekNumber is undefined", (done) => {
+    serverSocket.on("getQuestionsUndefined", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionsUndefined",
+      undefined)
+  });
+
+  test("Try getting questions with invalid week number", (done) => {
+    serverSocket.on("getQuestionTooHigh", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
+    });
+    serverSocket.on("getQuestionTooLow", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionTooHigh",
+      faker.datatype.number({ min: 53, max: 200 })
+    );
+    clientSocket.emit(
+      "getQuestionTooLow",
+      faker.datatype.number({ min: -100, max: 0 })
+    );
+  });
+
+  test("Try getting questions when there are less than 10 questions for that week", (done) => {
+    backend.addQuestion("QUESTION", ["FALSE", "FALSE", "FALSE", "CORRECT"], db, 1);
+    serverSocket.on("getQuestionsTooMany", (weekNumber) => {
+      expect(backend.getQuestions(db, weekNumber)).toBeUndefined();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionsTooMany",
+      1
+    );
+  })
+
+  test("Try getting questions when there are more than 10 questions for that week", (done) => {
+    var rand = faker.datatype.number({ min: 11, max: 50 });
+    for(var i = 0; i < rand; i++) {
+      backend.addQuestion(`QUESTION ${i}`, ["FALSE", "FALSE", "FALSE", "CORRECT"], db, 1);
+    }
+    serverSocket.on("getQuestionsTooFew", (weekNumber) => {
+      expect(backend.getQuestions(db, weekNumber)).toBeUndefined();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionsTooFew",
+      1
+    );
+  })
+
+  test("Get questions with exactly 10 questions", (done) => {
+    for(var i = 0; i < 10; i++) {
+      backend.addQuestion(`QUESTION ${i}`, ["FALSE", "FALSE", "FALSE", "CORRECT"], db, 1);
+    }
+    serverSocket.on("getQuestionsCorrect", (weekNumber) => {
+      var expected = [{"correct": "CORRECT", "question": "QUESTION 0", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 1", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 2", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"},
+                      {"correct": "CORRECT", "question": "QUESTION 3", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 4", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 5", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 6", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 7", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 8", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
+                      {"correct": "CORRECT", "question": "QUESTION 9", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}]
+      expect(backend.getQuestions(db, weekNumber)).toEqual(expected);
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionsCorrect",
+      1
+    );
+  })
+
+
+  test("run reset questions with null parameters", (done) => {
+    expect(backend.resetQuestions()).toBeFalsy();
+    done();
+  })
+
+  test("reset questions for a given week number and check that it's no longer in database", (done) => {
+    backend.addQuestion("QUESTION", ["a", "b", "c", "d"], 1);
+    expect(backend.resetQuestions(db, 1)).toBeTruthy();
+    const getQuestion = db.prepare("SELECT * FROM questions where quizId = 1");
+    expect(getQuestion.get()).toBeUndefined();
+    done();
+  })
+
   test("Add question with invalid week number", (done) => {
     serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
       expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();

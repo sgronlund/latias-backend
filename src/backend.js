@@ -146,6 +146,51 @@ function getQuestion(question, db, quizId) {
 }
 
 /**
+ * @summary gets all questions with a given quizId
+ * @param {Database} db database to look up in 
+ * @param {Integer} weekNumber the week number of the quiz
+ * @returns {[
+ *           { question: String,
+ *              wrong1: String,
+ *              wrong2: String,
+ *              wrong3: String,
+ *              correct: String,
+ *              quizId: Integer
+ *              }
+ *           , {...}, {...}, ... ]}
+ */
+ function getQuestions(db, weekNumber) {
+  if (!weekNumber || !db) return undefined;
+  if (weekNumber > 52 || weekNumber < 1) return undefined;
+  const table = db.prepare(
+    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
+  );
+  table.run();
+  const getAnswer = db.prepare("SELECT * FROM questions where quizId = ?");
+  getAnswers = getAnswer.all(weekNumber);
+
+  //If getAnswers is undefined, the ? will make sure the whole statement is undefined
+  if (getAnswers?.length !== 10) return undefined;
+
+  return getAnswers;
+}
+
+
+/**
+ * @summary Resets all questions for a given week number
+ * @param {Database} db database to reset in
+ * @param {Integer} weekNumber number of the week
+ * @returns {Boolean} true if questions could be reset, 
+ * false if not
+ */
+function resetQuestions(db, weekNumber) {
+  if(!weekNumber || !db) return false;
+  var deleteQuestions = db.prepare("DELETE FROM questions WHERE quizId = ?");
+  deleteQuestions.run(weekNumber);
+  return true;
+}
+
+/**
  * @summary Checks in the database if the question is in the
  * database and if the answer matches the correct one
  * @param {String} question The question to check
@@ -340,6 +385,8 @@ exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
 exports.addQuestion = addQuestion;
 exports.getQuestion = getQuestion;
+exports.getQuestions = getQuestions;
+exports.resetQuestions = resetQuestions;
 exports.checkAnswer = checkAnswer;
 exports.sendMail = sendMail;
 exports.checkMail = checkMail;

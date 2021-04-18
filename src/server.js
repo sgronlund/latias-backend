@@ -127,6 +127,22 @@ server.on("connection", (socket) => {
   });
 
   /**
+     * @summary When the socket receives a getQuestions signal,
+     * all questions with the given quizId are returned and 
+     * emitted to the client socket
+     */
+   socket.on("getQuestions", (quizId) => {
+    var questions = backend.getQuestions(db, quizId);
+    if (questions) socket.emit("getQuestionsSuccess", questions);
+    else socket.emit("getQuestionsFailure");
+  })
+
+  /**
+   * @summary resets all questions for a given week number
+   */
+  socket.on("resetQuestions", (weekNumber) => {backend.resetQuestions(db, weekNumber)})
+
+  /**
    * @summary When the socket receives a getUser signal,
    * the username is fetched from the database and
    * returned to the client socket
