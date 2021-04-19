@@ -4,7 +4,6 @@ var backend = require('./backend')
 var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
-var sha256 = require("sha256");
 var aes256 = require("aes256");
 
 const Database = require("better-sqlite3");
