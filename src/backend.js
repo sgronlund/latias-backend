@@ -180,8 +180,6 @@ function getQuestion(question, db, quizId) {
   const getAnswer = db.prepare("SELECT * FROM questions where quizId = ?");
   getAnswers = getAnswer.all(weekNumber);
 
-  console.log(getAnswers);
-
   if(getAnswers.length === 0) return undefined;
 
   return getAnswers;

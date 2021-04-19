@@ -559,7 +559,7 @@ describe("Test Suite for Server", () => {
       "getQuestionsNotExist",
       faker.datatype.number({ min: 1, max: 52 })
     );
-  })
+  });
 
   test("Try getting questions when weekNumber is undefined", (done) => {
     serverSocket.on("getQuestionsUndefined", (weekNumber) => {
@@ -567,9 +567,7 @@ describe("Test Suite for Server", () => {
       expect(getQuestions).toBeUndefined();
       done();
     });
-    clientSocket.emit(
-      "getQuestionsUndefined",
-      undefined)
+    clientSocket.emit("getQuestionsUndefined", undefined);
   });
 
   test("Try getting questions with invalid week number", (done) => {
@@ -593,34 +591,107 @@ describe("Test Suite for Server", () => {
   });
 
   test("Get questions with exactly 10 questions", (done) => {
-    for(var i = 0; i < 10; i++) {
-      backend.addQuestion(`QUESTION ${i}`, ["FALSE", "FALSE", "FALSE", "CORRECT"], db, 1);
+    for (var i = 0; i < 10; i++) {
+      backend.addQuestion(
+        `QUESTION ${i}`,
+        ["FALSE", "FALSE", "FALSE", "CORRECT"],
+        db,
+        1
+      );
     }
     serverSocket.on("getQuestionsCorrect", (weekNumber) => {
-      var expected = [{"correct": "CORRECT", "question": "QUESTION 0", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 1", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 2", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"},
-                      {"correct": "CORRECT", "question": "QUESTION 3", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 4", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 5", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 6", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 7", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 8", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}, 
-                      {"correct": "CORRECT", "question": "QUESTION 9", "quizId": 1, "wrong1": "FALSE", "wrong2": "FALSE", "wrong3": "FALSE"}]
+      var expected = [
+        {
+          correct: "CORRECT",
+          question: "QUESTION 0",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 1",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 2",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 3",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 4",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 5",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 6",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 7",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 8",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 9",
+          quizId: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+      ];
       expect(backend.getQuestions(db, weekNumber)).toEqual(expected);
       done();
     });
-    clientSocket.emit(
-      "getQuestionsCorrect",
-      1
-    );
-  })
-
+    clientSocket.emit("getQuestionsCorrect", 1);
+  });
 
   test("run reset questions with null parameters", (done) => {
     expect(backend.resetQuestions()).toBeFalsy();
     done();
-  })
+  });
 
   test("reset questions for a given week number and check that it's no longer in database", (done) => {
     backend.addQuestion("QUESTION", ["a", "b", "c", "d"], 1);
@@ -628,7 +699,7 @@ describe("Test Suite for Server", () => {
     const getQuestion = db.prepare("SELECT * FROM questions where quizId = 1");
     expect(getQuestion.get()).toBeUndefined();
     done();
-  })
+  });
 
   test("Register user, login and fetch the username", (done) => {
     serverSocket.on("register", (user, pass, email, id) => {
