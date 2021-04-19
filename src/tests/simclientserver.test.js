@@ -439,7 +439,7 @@ describe("Test Suite for Server", () => {
       faker.datatype.number({ min: 1, max: 52 })
     );
   });
-  
+
   test("Add question with invalid week number", (done) => {
     serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
       expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();
@@ -455,11 +455,13 @@ describe("Test Suite for Server", () => {
 
   test("Add 10 questions and try to add 1 more", (done) => {
     serverSocket.on("AddTooMany", (question, answers, id) => {
-      for(var i = 0; i < 10; i++) {
-        expect(backend.addQuestion(question+i, answers, db, id)).toBeTruthy();
-      } 
-      
-      expect(backend.addQuestion("too many " + question, answers, db, id)).toBeFalsy();
+      for (var i = 0; i < 10; i++) {
+        expect(backend.addQuestion(question + i, answers, db, id)).toBeTruthy();
+      }
+
+      expect(
+        backend.addQuestion("too many " + question, answers, db, id)
+      ).toBeFalsy();
       done();
     });
     clientSocket.emit(
