@@ -110,8 +110,8 @@ server.on("connection", (socket) => {
    * @summary When the socket receives an addQuestion signal,
    * the database is updated with the new question
    */
-  socket.on("addQuestion", (question, answers, quizId) => {
-    if (backend.addQuestion(question, answers, db, quizId)) socket.emit("addQuestionSuccess");
+  socket.on("addQuestion", (question, answers, weekNumber) => {
+    if (backend.addQuestion(question, answers, db, weekNumber)) socket.emit("addQuestionSuccess");
     else socket.emit("addQuestionFailure");
   });
 
@@ -120,19 +120,19 @@ server.on("connection", (socket) => {
    * the question and answers are fetched from the database
    * and returned to the client socket
    */
-  socket.on("getQuestion", (question, quizId) => {
-    var getQuestion = backend.getQuestion(question, db, quizId);
+  socket.on("getQuestion", (question, weekNumber) => {
+    var getQuestion = backend.getQuestion(question, db, weekNumber);
     if (getQuestion) socket.emit("getQuestionSuccess", getQuestion);
     else socket.emit("getQuestionFailure");
   });
 
   /**
      * @summary When the socket receives a getQuestions signal,
-     * all questions with the given quizId are returned and 
+     * all questions with the given weekNumber are returned and 
      * emitted to the client socket
      */
-   socket.on("getQuestions", (quizId) => {
-    var questions = backend.getQuestions(db, quizId);
+   socket.on("getQuestions", (weekNumber) => {
+    var questions = backend.getQuestions(db, weekNumber);
     if (questions) socket.emit("getQuestionsSuccess", questions);
     else socket.emit("getQuestionsFailure");
   })

@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
       "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
     );
     const tableQuestions = db.prepare(
-      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
+      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
     );
     tableUsers.run();
     tableQuestions.run();
@@ -538,7 +538,7 @@ describe("Test Suite for Server", () => {
         wrong1: "FALSE",
         wrong2: "FALSE",
         wrong3: "FALSE",
-        quizId: id,
+        weekNumber: id,
       });
       done();
     });
@@ -604,7 +604,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 0",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -612,7 +612,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 1",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -620,7 +620,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 2",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -628,7 +628,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 3",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -636,7 +636,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 4",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -644,7 +644,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 5",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -652,7 +652,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 6",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -660,7 +660,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 7",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -668,7 +668,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 8",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -676,7 +676,7 @@ describe("Test Suite for Server", () => {
         {
           correct: "CORRECT",
           question: "QUESTION 9",
-          quizId: 1,
+          weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
           wrong3: "FALSE",
@@ -696,7 +696,7 @@ describe("Test Suite for Server", () => {
   test("reset questions for a given week number and check that it's no longer in database", (done) => {
     backend.addQuestion("QUESTION", ["a", "b", "c", "d"], 1);
     expect(backend.resetQuestions(db, 1)).toBeTruthy();
-    const getQuestion = db.prepare("SELECT * FROM questions where quizId = 1");
+    const getQuestion = db.prepare("SELECT * FROM questions where weekNumber = 1");
     expect(getQuestion.get()).toBeUndefined();
     done();
   });
