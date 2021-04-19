@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
       "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
     );
     const tableQuestions = db.prepare(
-      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
+      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
     );
     tableUsers.run();
     tableQuestions.run();
@@ -440,6 +440,38 @@ describe("Test Suite for Server", () => {
     );
   });
 
+  test("Add question with invalid week number", (done) => {
+    serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
+      expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionInvalidWeek",
+      "QUESTION",
+      ["FALSE", "FALSE", "FALSE", "CORRECT"],
+      faker.datatype.number({ min: 53, max: 1000 })
+    );
+  });
+
+  test("Add 10 questions and try to add 1 more", (done) => {
+    serverSocket.on("AddTooMany", (question, answers, id) => {
+      for (var i = 0; i < 10; i++) {
+        expect(backend.addQuestion(question + i, answers, db, id)).toBeTruthy();
+      }
+
+      expect(
+        backend.addQuestion("too many " + question, answers, db, id)
+      ).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "AddTooMany",
+      "QUESTION",
+      ["FALSE", "FALSE", "FALSE", "CORRECT"],
+      1
+    );
+  });
+
   test("sendMail with null arguments", (done) => {
     serverSocket.on("sendMailNull", (code, mail, nodemailer) => {
       expect(backend.sendMail(code, mail, nodemailer)).toBeUndefined();
@@ -508,7 +540,7 @@ describe("Test Suite for Server", () => {
         wrong1: "FALSE",
         wrong2: "FALSE",
         wrong3: "FALSE",
-        quizId: id,
+        weekNumber: id,
       });
       done();
     });
@@ -519,17 +551,158 @@ describe("Test Suite for Server", () => {
     );
   });
 
-  test("Add question with invalid week number", (done) => {
-    serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
-      expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();
+  test("Try getting questions when there are none for the given week", (done) => {
+    serverSocket.on("getQuestionsNotExist", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
       done();
     });
     clientSocket.emit(
-      "getQuestionInvalidWeek",
-      "QUESTION",
-      ["FALSE", "FALSE", "FALSE", "CORRECT"],
-      faker.datatype.number({ min: 53, max: 1000 })
+      "getQuestionsNotExist",
+      faker.datatype.number({ min: 1, max: 52 })
     );
+  });
+
+  test("Try getting questions when weekNumber is undefined", (done) => {
+    serverSocket.on("getQuestionsUndefined", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
+      done();
+    });
+    clientSocket.emit("getQuestionsUndefined", undefined);
+  });
+
+  test("Try getting questions with invalid week number", (done) => {
+    serverSocket.on("getQuestionTooHigh", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
+    });
+    serverSocket.on("getQuestionTooLow", (weekNumber) => {
+      const getQuestions = backend.getQuestions(db, weekNumber);
+      expect(getQuestions).toBeUndefined();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionTooHigh",
+      faker.datatype.number({ min: 53, max: 200 })
+    );
+    clientSocket.emit(
+      "getQuestionTooLow",
+      faker.datatype.number({ min: -100, max: 0 })
+    );
+  });
+
+  test("Get questions with exactly 10 questions", (done) => {
+    for (var i = 0; i < 10; i++) {
+      backend.addQuestion(
+        `QUESTION ${i}`,
+        ["FALSE", "FALSE", "FALSE", "CORRECT"],
+        db,
+        1
+      );
+    }
+    serverSocket.on("getQuestionsCorrect", (weekNumber) => {
+      var expected = [
+        {
+          correct: "CORRECT",
+          question: "QUESTION 0",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 1",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 2",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 3",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 4",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 5",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 6",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 7",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 8",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+        {
+          correct: "CORRECT",
+          question: "QUESTION 9",
+          weekNumber: 1,
+          wrong1: "FALSE",
+          wrong2: "FALSE",
+          wrong3: "FALSE",
+        },
+      ];
+      expect(backend.getQuestions(db, weekNumber)).toEqual(expected);
+      done();
+    });
+    clientSocket.emit("getQuestionsCorrect", 1);
+  });
+
+  test("run reset questions with null parameters", (done) => {
+    expect(backend.resetQuestions()).toBeFalsy();
+    done();
+  });
+
+  test("reset questions for a given week number and check that it's no longer in database", (done) => {
+    backend.addQuestion("QUESTION", ["a", "b", "c", "d"], 1);
+    expect(backend.resetQuestions(db, 1)).toBeTruthy();
+    const getQuestion = db.prepare(
+      "SELECT * FROM questions where weekNumber = 1"
+    );
+    expect(getQuestion.get()).toBeUndefined();
+    done();
   });
 
   test("Register user, login and fetch the username", (done) => {

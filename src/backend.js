@@ -83,18 +83,18 @@ the index for removing the user from the array */
  * @param {String} question The question to add
  * @param {[String, String, String, String]} answers An array
  * of strings representing each answer
- * @param {Integer} quizId id of the quiz
+ * @param {Integer} weekNumber id of the quiz
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
-function addQuestion(question, answers, db, quizId) {
-  if (!question || !answers || answers.includes(undefined) || !quizId || !db)
+function addQuestion(question, answers, db, weekNumber) {
+  if (!question || !answers || answers.includes(undefined) || !weekNumber || !db)
     return false;
   if (answers.length !== 4) return false;
-  if (typeof quizId !== "number" || quizId > 52 || quizId < 1) return false;
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
 
   const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), quizId INT)"
+    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
   );
   table.run();
 
@@ -103,10 +103,21 @@ function addQuestion(question, answers, db, quizId) {
   );
   var questionExists = checkQuestion.get(question);
 
+  
+
   if (questionExists) return false;
 
+  
+  const checkAmount = db.prepare("SELECT * FROM questions where weekNumber = ?");
+  amount = checkAmount.all(weekNumber);
+
+  //If getAnswers is undefined, the ? will make sure the whole statement is undefined
+  //instead of trying to access length from an undefined value
+  if (amount?.length === 10) return false;
+  
+
   const addQuestion = db.prepare(
-    "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, quizId) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
   );
   addQuestion.run(
     question,
@@ -114,7 +125,7 @@ function addQuestion(question, answers, db, quizId) {
     answers[1],
     answers[2],
     answers[3],
-    quizId
+    weekNumber
   );
 
   return true;
@@ -131,18 +142,62 @@ function addQuestion(question, answers, db, quizId) {
  *              wrong3: String,
  *              correct: String }}
  */
-function getQuestion(question, db, quizId) {
+function getQuestion(question, db, weekNumber) {
   if (!question || !db) return undefined;
   const table = db.prepare(
     "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))"
   );
   table.run();
   const getAnswer = db.prepare(
-    "SELECT * FROM questions where question = ? AND quizId = ?"
+    "SELECT * FROM questions where question = ? AND weekNumber = ?"
   );
 
   //This will return undefined if get() does not find any row, which means we don't have to check it manually
-  return getAnswer.get(question, quizId);
+  return getAnswer.get(question, weekNumber);
+}
+
+/**
+ * @summary gets all questions with a given weekNumber
+ * @param {Database} db database to look up in 
+ * @param {Integer} weekNumber the week number of the quiz
+ * @returns {[
+ *           { question: String,
+ *              wrong1: String,
+ *              wrong2: String,
+ *              wrong3: String,
+ *              correct: String,
+ *              weekNumber: Integer
+ *              }
+ *           , {...}, {...}, ... ]}
+ */
+ function getQuestions(db, weekNumber) {
+  if (!weekNumber || !db) return undefined;
+  if (weekNumber > 52 || weekNumber < 1) return undefined;
+  const table = db.prepare(
+    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+  );
+  table.run();
+  const getAnswer = db.prepare("SELECT * FROM questions where weekNumber = ?");
+  getAnswers = getAnswer.all(weekNumber);
+
+  if(getAnswers.length === 0) return undefined;
+
+  return getAnswers;
+}
+
+
+/**
+ * @summary Resets all questions for a given week number
+ * @param {Database} db database to reset in
+ * @param {Integer} weekNumber number of the week
+ * @returns {Boolean} true if questions could be reset, 
+ * false if not
+ */
+function resetQuestions(db, weekNumber) {
+  if(!weekNumber || !db) return false;
+  var deleteQuestions = db.prepare("DELETE FROM questions WHERE weekNumber = ?");
+  deleteQuestions.run(weekNumber);
+  return true;
 }
 
 /**
@@ -340,6 +395,8 @@ exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
 exports.addQuestion = addQuestion;
 exports.getQuestion = getQuestion;
+exports.getQuestions = getQuestions;
+exports.resetQuestions = resetQuestions;
 exports.checkAnswer = checkAnswer;
 exports.sendMail = sendMail;
 exports.checkMail = checkMail;
