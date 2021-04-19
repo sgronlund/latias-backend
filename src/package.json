@@ -6,10 +6,16 @@
   "scripts": {
     "test": "jest",
     "start": "node server.js",
-    "document": "jsdoc server.js -d ../docs/out"
+    "document": "jsdoc server.js -d ../docs/out",
+    "stress_test": "npx jest tests/stresstests.test.js",
+    "regular_test": "npx jest tests/simclientserver.test.js",
+    "clean": "node misc/clean.js",
+    "format": "npx prettier --write ./**/*.js"
   },
   "jest": {
-    "verbose": true
+    "verbose": true,
+    "collectCoverage": true,
+    "coverageDirectory": "../docs/coverage"
   },
   "repository": {
     "type": "git",

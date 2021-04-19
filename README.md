@@ -34,3 +34,26 @@ Then Expo will launch in your browser and you can choose between previewing in a
 If you choose the browser your console should look something like this:
 
 ![image](https://user-images.githubusercontent.com/55285451/113585858-1120f780-962d-11eb-81f5-9c4978737d20.png)
+
+### Tests
+
+To run tests, you can simply run (after running npm install):
+```bash
+npm test
+```
+
+### Docs
+
+To generate documentation, you can simply run (after running npm install):
+```bash
+npm run document
+```
+
+This will generate the src/out/ folder where index.html will contain all generated documentation.
+
+### Clean
+
+To clean up temporary files or files that should not be commited, simply run:
+```bash
+npm run clean
+```
