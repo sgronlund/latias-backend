@@ -1,10 +1,11 @@
-
-
 let users = [];
+let clients = [];
 var backend = require('./backend')
 var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
+var sha256 = require("sha256");
+var aes256 = require("aes256");
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
@@ -41,7 +42,16 @@ server.on("connection", (socket) => {
    * corresponding success/fail message is sent
    */
 
-  socket.on("register", (username, password, email) => {
+  socket.on("register", (username, encryptedPassword, email) => {
+    //fetch the key that was used to encrypt the password
+    var sharedKey;
+    for(cli of clients) {
+        if(cli.id == socket.id) sharedKey = cli.key;
+    }
+    //decrypt the password using the key
+    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
+
+    console.log(username + " borde ha " + password + " som lösen i databasen");
     if (backend.clientRegister(username, password, email, db))
       socket.emit("registerSuccess");
     else socket.emit("registerFailure");
@@ -52,7 +62,16 @@ server.on("connection", (socket) => {
    * the username and password is checked and a
    * corresponding success/fail message is sent
    */
-  socket.on("login", (username, password) => {
+  socket.on("login", (username, encryptedPassword) => {
+    //fetch the key that was used to encrypt the password
+    var sharedKey;
+    for(cli of clients) {
+        if(cli.id == socket.id) sharedKey = cli.key;
+    }
+    //decrypt the password using the key
+    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
+
+
     if (backend.clientLogin(username, password, db, users, socket.id) === "valid")
       socket.emit("loginSuccess");
     else if (backend.clientLogin(username, password, db, users, socket.id) === "root")
@@ -159,7 +178,7 @@ server.on("connection", (socket) => {
     var g = bigInt(2579);
     var p = bigInt(5159);
     var server_public_key = g.modPow(server_private_key,p);
-    client.emit('serverPublic', Number(server_public_key), Number(g), Number(p));
+    socket.emit('serverPublic', Number(server_public_key), Number(g), Number(p));
 });
 
 socket.on('clientPublic',(client_public_key) => {
