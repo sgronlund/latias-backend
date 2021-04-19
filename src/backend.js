@@ -103,7 +103,18 @@ function addQuestion(question, answers, db, quizId) {
   );
   var questionExists = checkQuestion.get(question);
 
+  
+
   if (questionExists) return false;
+
+  
+  const checkAmount = db.prepare("SELECT * FROM questions where quizId = ?");
+  amount = checkAmount.all(quizId);
+
+  //If getAnswers is undefined, the ? will make sure the whole statement is undefined
+  //instead of trying to access length from an undefined value
+  if (amount?.length === 10) return false;
+  
 
   const addQuestion = db.prepare(
     "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, quizId) VALUES (?, ?, ?, ?, ?, ?)"
@@ -169,8 +180,9 @@ function getQuestion(question, db, quizId) {
   const getAnswer = db.prepare("SELECT * FROM questions where quizId = ?");
   getAnswers = getAnswer.all(weekNumber);
 
-  //If getAnswers is undefined, the ? will make sure the whole statement is undefined
-  if (getAnswers?.length !== 10) return undefined;
+  console.log(getAnswers);
+
+  if(getAnswers.length === 0) return undefined;
 
   return getAnswers;
 }

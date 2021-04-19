@@ -439,6 +439,36 @@ describe("Test Suite for Server", () => {
       faker.datatype.number({ min: 1, max: 52 })
     );
   });
+  
+  test("Add question with invalid week number", (done) => {
+    serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
+      expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "getQuestionInvalidWeek",
+      "QUESTION",
+      ["FALSE", "FALSE", "FALSE", "CORRECT"],
+      faker.datatype.number({ min: 53, max: 1000 })
+    );
+  });
+
+  test("Add 10 questions and try to add 1 more", (done) => {
+    serverSocket.on("AddTooMany", (question, answers, id) => {
+      for(var i = 0; i < 10; i++) {
+        expect(backend.addQuestion(question+i, answers, db, id)).toBeTruthy();
+      } 
+      
+      expect(backend.addQuestion("too many " + question, answers, db, id)).toBeFalsy();
+      done();
+    });
+    clientSocket.emit(
+      "AddTooMany",
+      "QUESTION",
+      ["FALSE", "FALSE", "FALSE", "CORRECT"],
+      1
+    );
+  });
 
   test("sendMail with null arguments", (done) => {
     serverSocket.on("sendMailNull", (code, mail, nodemailer) => {
@@ -562,33 +592,6 @@ describe("Test Suite for Server", () => {
     );
   });
 
-  test("Try getting questions when there are less than 10 questions for that week", (done) => {
-    backend.addQuestion("QUESTION", ["FALSE", "FALSE", "FALSE", "CORRECT"], db, 1);
-    serverSocket.on("getQuestionsTooMany", (weekNumber) => {
-      expect(backend.getQuestions(db, weekNumber)).toBeUndefined();
-      done();
-    });
-    clientSocket.emit(
-      "getQuestionsTooMany",
-      1
-    );
-  })
-
-  test("Try getting questions when there are more than 10 questions for that week", (done) => {
-    var rand = faker.datatype.number({ min: 11, max: 50 });
-    for(var i = 0; i < rand; i++) {
-      backend.addQuestion(`QUESTION ${i}`, ["FALSE", "FALSE", "FALSE", "CORRECT"], db, 1);
-    }
-    serverSocket.on("getQuestionsTooFew", (weekNumber) => {
-      expect(backend.getQuestions(db, weekNumber)).toBeUndefined();
-      done();
-    });
-    clientSocket.emit(
-      "getQuestionsTooFew",
-      1
-    );
-  })
-
   test("Get questions with exactly 10 questions", (done) => {
     for(var i = 0; i < 10; i++) {
       backend.addQuestion(`QUESTION ${i}`, ["FALSE", "FALSE", "FALSE", "CORRECT"], db, 1);
@@ -626,19 +629,6 @@ describe("Test Suite for Server", () => {
     expect(getQuestion.get()).toBeUndefined();
     done();
   })
-
-  test("Add question with invalid week number", (done) => {
-    serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
-      expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();
-      done();
-    });
-    clientSocket.emit(
-      "getQuestionInvalidWeek",
-      "QUESTION",
-      ["FALSE", "FALSE", "FALSE", "CORRECT"],
-      faker.datatype.number({ min: 53, max: 1000 })
-    );
-  });
 
   test("Register user, login and fetch the username", (done) => {
     serverSocket.on("register", (user, pass, email, id) => {
