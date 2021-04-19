@@ -698,7 +698,9 @@ describe("Test Suite for Server", () => {
   test("reset questions for a given week number and check that it's no longer in database", (done) => {
     backend.addQuestion("QUESTION", ["a", "b", "c", "d"], 1);
     expect(backend.resetQuestions(db, 1)).toBeTruthy();
-    const getQuestion = db.prepare("SELECT * FROM questions where weekNumber = 1");
+    const getQuestion = db.prepare(
+      "SELECT * FROM questions where weekNumber = 1"
+    );
     expect(getQuestion.get()).toBeUndefined();
     done();
   });
