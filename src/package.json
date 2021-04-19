@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/sgronlund/latias-backend#readme",
   "dependencies": {
+    "aes256": "^1.1.0",
     "better-sqlite3": "^7.1.4",
     "big-integer": "^1.6.48",
     "cors": "^2.8.5",
