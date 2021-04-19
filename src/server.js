@@ -196,17 +196,6 @@ socket.on('clientPublic',(client_public_key) => {
     });
 });
 
-socket.on('testEncrypt', (encryptedMsg) => {
-    var sharedKey;
-    for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
-    }
-    console.log(sharedKey.toString());
-    var msg = aes256.decrypt(sharedKey.toString(), encryptedMsg);
-
-    console.log(msg);
-})
-
 
   /**
    * @summary This code is ran every 1000ms and counts down
