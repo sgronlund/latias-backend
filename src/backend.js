@@ -64,16 +64,20 @@ function clientLogin(username, password, db, users, id) {
  * @returns {Boolean} true if client was found, false if not
  */
 function clientLogout(id, users) {
+  console.log("gick in")
   if (!id || !users) return false;
-
+  console.log("kom förbi check")
+  
   /* We could use the getUser() function here but we need 
 the index for removing the user from the array */
   for (var i = 0; i < users.length; i++) {
     if (users[i].ID === id) {
+      console.log("hittad")
       users.splice(i, 1);
       return true;
     }
   }
+  console.log("nee :(")
   return false;
 }
 

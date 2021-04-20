@@ -7,6 +7,7 @@ var bigInt = require("big-integer");
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
+db.prepare("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))").run();
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -66,7 +67,7 @@ server.on("connection", (socket) => {
    * otherwise failure message
    */
     socket.on("logout", () => {
-    if (backend.clientLogout(socket.id, users) === "valid") socket.emit("logoutSuccess");
+    if (backend.clientLogout(socket.id, users) === true) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
 
