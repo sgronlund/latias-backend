@@ -157,11 +157,13 @@ server.on("connection", (socket) => {
     else socket.emit("returnUserFailure");
   });
 
+  let g,p;
+
   //TODO: document this
   socket.on('startKeyExchange', () => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-    var g = bigInt(backend.randomPrime());
-    var p = bigInt(backend.randomPrime());
+    g = bigInt(backend.randomPrime());
+    p = bigInt(2*g+1)
     var server_public_key = g.modPow(server_private_key,p);
     socket.emit('serverPublic', Number(server_public_key), Number(g), Number(p));
 });
@@ -169,10 +171,7 @@ server.on("connection", (socket) => {
 //TODO: document this
 socket.on('clientPublic',(client_public_key) => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-    var g = bigInt(backend.randomPrime());
-    var p = bigInt(backend.randomPrime());
     client_public_key = bigInt(client_public_key);
-    
     var shared_key = client_public_key.modPow(server_private_key,p);
     console.log("the established key: " + shared_key);
 
