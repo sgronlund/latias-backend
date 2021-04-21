@@ -62,7 +62,7 @@ server.on("connection", (socket) => {
    * the username and password is checked and a
    * corresponding success/fail message is sent
    */
-  socket.on("login", (username, encryptedPassword) => {
+  socket.on("login", (username, encryptedPassword, id) => {
     //fetch the key that was used to encrypt the password
     var sharedKey;
     for(cli of clients) {
@@ -72,9 +72,9 @@ server.on("connection", (socket) => {
     var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
 
 
-    if (backend.clientLogin(username, password, db, users, socket.id) === "valid")
+    if (backend.clientLogin(username, password, db, users, id) === "valid")
       socket.emit("loginSuccess");
-    else if (backend.clientLogin(username, password, db, users, socket.id) === "root")
+    else if (backend.clientLogin(username, password, db, users, id) === "root")
       socket.emit("loginRoot");
     else socket.emit("loginFailure");
   });
@@ -85,8 +85,8 @@ server.on("connection", (socket) => {
    * if it does, logs out user and sends a success message,
    * otherwise failure message
    */
-    socket.on("logout", () => {
-    if (backend.clientLogout(socket.id, users) === true) socket.emit("logoutSuccess");
+    socket.on("logout", (id) => {
+    if (backend.clientLogout(id, users) === true) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
 
@@ -121,7 +121,14 @@ server.on("connection", (socket) => {
    * @summary When the socket receives an updatePass signal,
    * the users password is updated with the received password
    */
-  socket.on("updatePass", (email, password) => {
+  socket.on("updatePass", (email, encryptedPassword) => {
+    var sharedKey;
+    for(cli of clients) {
+        if(cli.id == socket.id) sharedKey = cli.key;
+    }
+    //decrypt the password using the key
+    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
+
     if (backend.updatePassword(password, email, db)) socket.emit("updatePassSuccess");
     else socket.emit("updatePassFailure");
   });
@@ -172,6 +179,12 @@ server.on("connection", (socket) => {
     if (user) socket.emit("returnUserSuccess", user);
     else socket.emit("returnUserFailure");
   });
+
+  socket.on("getUserByEmail", (email) => {
+      var user = backend.getUserByEmail(email, db)
+      if (user) socket.emit("returnUserByEmailSuccess", user);
+      else socket.emit("returnUserByEmailFailure");
+  })
 
   socket.on('startKeyExchange', () => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google

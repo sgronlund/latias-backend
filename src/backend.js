@@ -64,20 +64,16 @@ function clientLogin(username, password, db, users, id) {
  * @returns {Boolean} true if client was found, false if not
  */
 function clientLogout(id, users) {
-  console.log("gick in")
   if (!id || !users) return false;
-  console.log("kom förbi check")
   
   /* We could use the getUser() function here but we need 
 the index for removing the user from the array */
   for (var i = 0; i < users.length; i++) {
     if (users[i].ID === id) {
-      console.log("hittad")
       users.splice(i, 1);
       return true;
     }
   }
-  console.log("nee :(")
   return false;
 }
 
@@ -394,6 +390,18 @@ function getUser(id, users) {
   return undefined;
 }
 
+function getUserByEmail(email, db) {
+  if (!email) return undefined;
+  const user = db.prepare(
+    `SELECT username FROM users WHERE email = ?`
+  ).get(email).username
+  if (user) {
+    return user
+  } else {
+    return undefined
+  }
+}
+
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
@@ -410,3 +418,4 @@ exports.updatePassword = updatePassword;
 exports.generateCode = generateCode;
 exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
+exports.getUserByEmail = getUserByEmail
