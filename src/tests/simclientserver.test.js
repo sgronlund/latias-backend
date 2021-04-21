@@ -898,10 +898,10 @@ describe("Test Suite for Server", () => {
 
   test("Generate prime, check that it's prime and between 5000-10000", (done) => {
     function isPrime(value) {
-      for(var i = 2; i < value; i++) {
-          if(value % i === 0) {
-              return false;
-          }
+      for (var i = 2; i < value; i++) {
+        if (value % i === 0) {
+          return false;
+        }
       }
       return value > 1;
     }
@@ -914,5 +914,5 @@ describe("Test Suite for Server", () => {
       done();
     });
     clientSocket.emit("generatePrime");
-  })
+  });
 });
