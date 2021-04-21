@@ -4,7 +4,6 @@ var backend = require('./backend')
 var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
-var aes256 = require("aes256");
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
@@ -43,14 +42,7 @@ server.on("connection", (socket) => {
    */
 
   socket.on("register", (username, encryptedPassword, email) => {
-    //fetch the key that was used to encrypt the password
-    var sharedKey;
-    for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
-    }
-    //decrypt the password using the key
-    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
-
+    var password = backend.decryptPassword(clients, encryptedPassword, socket.id);
     console.log(username + " borde ha " + password + " som lösen i databasen");
     if (backend.clientRegister(username, password, email, db))
       socket.emit("registerSuccess");
@@ -63,15 +55,7 @@ server.on("connection", (socket) => {
    * corresponding success/fail message is sent
    */
   socket.on("login", (username, encryptedPassword) => {
-    //fetch the key that was used to encrypt the password
-    var sharedKey;
-    for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
-    }
-    //decrypt the password using the key
-    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
-
-
+    var password = backend.decryptPassword(clients, encryptedPassword, socket.id);
     if (backend.clientLogin(username, password, db, users, socket.id) === "valid")
       socket.emit("loginSuccess");
     else if (backend.clientLogin(username, password, db, users, socket.id) === "root")
@@ -173,18 +157,20 @@ server.on("connection", (socket) => {
     else socket.emit("returnUserFailure");
   });
 
+  //TODO: document this
   socket.on('startKeyExchange', () => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-    var g = bigInt(2579);
-    var p = bigInt(5159);
+    var g = bigInt(backend.randomPrime());
+    var p = bigInt(backend.randomPrime());
     var server_public_key = g.modPow(server_private_key,p);
     socket.emit('serverPublic', Number(server_public_key), Number(g), Number(p));
 });
-
+  
+//TODO: document this
 socket.on('clientPublic',(client_public_key) => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-    var g = bigInt(2579);
-    var p = bigInt(5159);
+    var g = bigInt(backend.randomPrime());
+    var p = bigInt(backend.randomPrime());
     client_public_key = bigInt(client_public_key);
     
     var shared_key = client_public_key.modPow(server_private_key,p);

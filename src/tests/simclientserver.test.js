@@ -895,4 +895,24 @@ describe("Test Suite for Server", () => {
     });
     clientSocket.emit("getUserNull");
   });
+
+  test("Generate prime, check that it's prime and between 5000-10000", (done) => {
+    function isPrime(value) {
+      for(var i = 2; i < value; i++) {
+          if(value % i === 0) {
+              return false;
+          }
+      }
+      return value > 1;
+    }
+
+    serverSocket.on("generatePrime", () => {
+      var prime = backend.randomPrime();
+      expect(prime).toBeGreaterThan(5000);
+      expect(prime).toBeLessThan(10000);
+      expect(isPrime(prime)).toBeTruthy();
+      done();
+    });
+    clientSocket.emit("generatePrime");
+  })
 });
