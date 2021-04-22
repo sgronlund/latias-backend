@@ -880,15 +880,24 @@ describe("Test Suite for Server", () => {
     clientSocket.emit("checkMail", mail);
   });
 
-  ///Mega hard coded but want that good stuff LCOV any %
-  test("StringifySeconds", (done) => {
-    serverSocket.on("stringifySeconds", (week) => {
+  test("StringifySeconds less than one day", (done) => {
+    serverSocket.on("stringifySecondsLess", (week) => {
       expect(backend.stringifySeconds(week)).toBe(
-        "days: 0 hours: 15 minutes: 5 seconds: 21"
+        "15:05:21"
       );
       done();
     });
-    clientSocket.emit("stringifySeconds", 54321);
+    clientSocket.emit("stringifySecondsLess", 54321);
+  });
+
+  test("StringifySeconds more than one day", (done) => {
+    serverSocket.on("stringifySecondsMore", (week) => {
+      expect(backend.stringifySeconds(week)).toBe(
+        "6 days 9 hours"
+      );
+      done();
+    });
+    clientSocket.emit("stringifySecondsMore", 554321);
   });
 
   test("getUser with NULL arguments", (done) => {
