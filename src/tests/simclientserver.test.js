@@ -882,9 +882,7 @@ describe("Test Suite for Server", () => {
 
   test("StringifySeconds less than one day", (done) => {
     serverSocket.on("stringifySecondsLess", (week) => {
-      expect(backend.stringifySeconds(week)).toBe(
-        "15:05:21"
-      );
+      expect(backend.stringifySeconds(week)).toBe("15:05:21");
       done();
     });
     clientSocket.emit("stringifySecondsLess", 54321);
@@ -892,9 +890,7 @@ describe("Test Suite for Server", () => {
 
   test("StringifySeconds more than one day", (done) => {
     serverSocket.on("stringifySecondsMore", (week) => {
-      expect(backend.stringifySeconds(week)).toBe(
-        "6 days 9 hours"
-      );
+      expect(backend.stringifySeconds(week)).toBe("6 days 9 hours");
       done();
     });
     clientSocket.emit("stringifySecondsMore", 554321);
