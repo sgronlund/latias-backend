@@ -910,26 +910,35 @@ describe("Test Suite for Server", () => {
   test("decrypt a password", (done) => {
     var password = faker.internet.password();
     serverSocket.on("decryptPassword", (clients, encryptedPassword, id) => {
-      var decryptedPassword = backend.decryptPassword(clients, encryptedPassword, id);
+      var decryptedPassword = backend.decryptPassword(
+        clients,
+        encryptedPassword,
+        id
+      );
       expect(decryptedPassword).toBe(password);
       done();
     });
     var encryptedPassword = aes256.encrypt("key", password);
-    clients.push({id: clientSocket.id, key: "key"})
-    clientSocket.emit("decryptPassword", clients, encryptedPassword, clientSocket.id);
+    clients.push({ id: clientSocket.id, key: "key" });
+    clientSocket.emit(
+      "decryptPassword",
+      clients,
+      encryptedPassword,
+      clientSocket.id
+    );
   });
 
   test("Simulate asymmetric key exchange and compare shared keys", (done) => {
     var serverPrivateKey = bigInt(faker.finance.account(256));
     var g = bigInt(backend.randomPrime());
-    var p = bigInt(2*g+1)
-    var serverPublicKey = g.modPow(serverPrivateKey,p);
-    
-    serverSocket.on('clientPublic', (clientPublicKey, expectedSharedKey) => {
-        clientPublicKey = bigInt(clientPublicKey);
-        var sharedKey = clientPublicKey.modPow(serverPrivateKey,p);
-        expect(sharedKey.toString()).toMatch(expectedSharedKey.toString());
-        done();
+    var p = bigInt(2 * g + 1);
+    var serverPublicKey = g.modPow(serverPrivateKey, p);
+
+    serverSocket.on("clientPublic", (clientPublicKey, expectedSharedKey) => {
+      clientPublicKey = bigInt(clientPublicKey);
+      var sharedKey = clientPublicKey.modPow(serverPrivateKey, p);
+      expect(sharedKey.toString()).toMatch(expectedSharedKey.toString());
+      done();
     });
 
     clientSocket.on("serverPublic", (serverPublicKey, g, p) => {
@@ -939,9 +948,18 @@ describe("Test Suite for Server", () => {
       var privateKey = bigInt(faker.finance.account(256));
       var clientPublicKey = g.modPow(privateKey, p);
       sharedKey = serverPublicKey.modPow(privateKey, p);
-      clientSocket.emit("clientPublic", Number(clientPublicKey), Number(sharedKey));
+      clientSocket.emit(
+        "clientPublic",
+        Number(clientPublicKey),
+        Number(sharedKey)
+      );
     });
-    serverSocket.emit('serverPublic', Number(serverPublicKey), Number(g), Number(p));
+    serverSocket.emit(
+      "serverPublic",
+      Number(serverPublicKey),
+      Number(g),
+      Number(p)
+    );
   });
 
   test("Generate prime, check that it's prime and between 5000-10000", (done) => {
