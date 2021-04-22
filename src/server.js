@@ -58,7 +58,7 @@ server.on("connection", (socket) => {
     var password = backend.decryptPassword(clients, encryptedPassword, socket.id);
     if (backend.clientLogin(username, password, db, users, socket.id) === "valid")
       socket.emit("loginSuccess");
-    else if (backend.clientLogin(username, password, db, users, id) === "root")
+    else if (backend.clientLogin(username, password, db, users, socket.id) === "root")
       socket.emit("loginRoot");
     else socket.emit("loginFailure");
   });

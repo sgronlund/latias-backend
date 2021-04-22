@@ -408,6 +408,7 @@ function decryptPassword(clients, encryptedPassword, id) {
   for(cli of clients) {
       if(cli.id == id) sharedKey = cli.key;
   }
+  if(!sharedKey) return undefined;
   //decrypt the password using the key
   var decryptedPassword = aes256.decrypt(sharedKey.toString(), encryptedPassword);
   return decryptedPassword;
