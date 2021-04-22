@@ -361,17 +361,15 @@ function stringifySeconds(counter) {
   // Figure out better solution for calculating this.
   days = Math.floor(counter / day);
   hours = Math.floor((counter % day) / hour);
+  if(days>1) return days + " days " + hours + " hours";
   minutes = Math.floor(((counter % day) % hour) / minute);
   seconds = Math.floor(((counter % day) % hour) % minute);
   return (
-    "days: " +
-    days +
-    " hours: " +
-    hours +
-    " minutes: " +
-    minutes +
-    " seconds: " +
-    seconds
+    (hours < 10 ? "0" + hours : hours) +
+    ":" +
+    (minutes < 10 ? "0" + minutes : minutes) +
+    ":" +
+    (seconds < 10 ? "0" + seconds : seconds)
   );
 }
 
