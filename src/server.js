@@ -106,13 +106,7 @@ server.on("connection", (socket) => {
    * the users password is updated with the received password
    */
   socket.on("updatePass", (email, encryptedPassword) => {
-    var sharedKey;
-    for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
-    }
-    //decrypt the password using the key
-    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
-
+    var password = backend.decryptPassword(clients, encryptedPassword, socket.id);
     if (backend.updatePassword(password, email, db)) socket.emit("updatePassSuccess");
     else socket.emit("updatePassFailure");
   });

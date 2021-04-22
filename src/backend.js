@@ -393,7 +393,16 @@ function getUser(id, users) {
   return undefined;
 }
 
+/**
+ * 
+ * @param {{id: String, sharedKey: Integer}} clients an array of connected
+ * sockets and information about them
+ * @param {String} encryptedPassword password to decrypt 
+ * @param {String} id id of socket 
+ * @returns {String} decrypted password
+ */
 function decryptPassword(clients, encryptedPassword, id) {
+  if(!clients || !encryptedPassword || !id) return undefined;
   var aes256 = require("aes256");
   var sharedKey;
   for(cli of clients) {
@@ -415,6 +424,12 @@ function randomPrime() {
   return parseInt(primeArray[random]);
 }
 
+/**
+ * @summary Gets user with registered email
+ * @param {String} email email of the user
+ * @param {Database} db database to get user from
+ * @returns {String} the username if found, undefined if not
+ */
 function getUserByEmail(email, db) {
   if (!email) return undefined;
   const user = db.prepare(
@@ -445,4 +460,4 @@ exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
 exports.decryptPassword = decryptPassword;
 exports.randomPrime = randomPrime;
-exports.getUserByEmail = getUserByEmail
+exports.getUserByEmail = getUserByEmail;
