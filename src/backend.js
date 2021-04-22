@@ -65,7 +65,6 @@ function clientLogin(username, password, db, users, id) {
  */
 function clientLogout(id, users) {
   if (!id || !users) return false;
-
   /* We could use the getUser() function here but we need 
 the index for removing the user from the array */
   for (var i = 0; i < users.length; i++) {
@@ -416,6 +415,18 @@ function randomPrime() {
   return parseInt(primeArray[random]);
 }
 
+function getUserByEmail(email, db) {
+  if (!email) return undefined;
+  const user = db.prepare(
+    `SELECT username FROM users WHERE email = ?`
+  ).get(email).username
+  if (user) {
+    return user
+  } else {
+    return undefined
+  }
+}
+
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
@@ -434,3 +445,4 @@ exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
 exports.decryptPassword = decryptPassword;
 exports.randomPrime = randomPrime;
+exports.getUserByEmail = getUserByEmail

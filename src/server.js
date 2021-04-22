@@ -58,7 +58,7 @@ server.on("connection", (socket) => {
     var password = backend.decryptPassword(clients, encryptedPassword, socket.id);
     if (backend.clientLogin(username, password, db, users, socket.id) === "valid")
       socket.emit("loginSuccess");
-    else if (backend.clientLogin(username, password, db, users, socket.id) === "root")
+    else if (backend.clientLogin(username, password, db, users, id) === "root")
       socket.emit("loginRoot");
     else socket.emit("loginFailure");
   });
@@ -69,8 +69,8 @@ server.on("connection", (socket) => {
    * if it does, logs out user and sends a success message,
    * otherwise failure message
    */
-    socket.on("logout", () => {
-    if (backend.clientLogout(socket.id, users) === true) socket.emit("logoutSuccess");
+    socket.on("logout", (id) => {
+    if (backend.clientLogout(id, users) === true) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
 
@@ -105,7 +105,14 @@ server.on("connection", (socket) => {
    * @summary When the socket receives an updatePass signal,
    * the users password is updated with the received password
    */
-  socket.on("updatePass", (email, password) => {
+  socket.on("updatePass", (email, encryptedPassword) => {
+    var sharedKey;
+    for(cli of clients) {
+        if(cli.id == socket.id) sharedKey = cli.key;
+    }
+    //decrypt the password using the key
+    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
+
     if (backend.updatePassword(password, email, db)) socket.emit("updatePassSuccess");
     else socket.emit("updatePassFailure");
   });
@@ -160,6 +167,12 @@ server.on("connection", (socket) => {
   let g,p;
 
   //TODO: document this
+  socket.on("getUserByEmail", (email) => {
+      var user = backend.getUserByEmail(email, db)
+      if (user) socket.emit("returnUserByEmailSuccess", user);
+      else socket.emit("returnUserByEmailFailure");
+  })
+
   socket.on('startKeyExchange', () => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
     g = bigInt(backend.randomPrime());
