@@ -65,7 +65,6 @@ function clientLogin(username, password, db, users, id) {
  */
 function clientLogout(id, users) {
   if (!id || !users) return false;
-  
   /* We could use the getUser() function here but we need 
 the index for removing the user from the array */
   for (var i = 0; i < users.length; i++) {
@@ -195,6 +194,10 @@ function getQuestion(question, db, weekNumber) {
  */
 function resetQuestions(db, weekNumber) {
   if(!weekNumber || !db) return false;
+  const table = db.prepare(
+    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+  );
+  table.run();
   var deleteQuestions = db.prepare("DELETE FROM questions WHERE weekNumber = ?");
   deleteQuestions.run(weekNumber);
   return true;
@@ -390,6 +393,43 @@ function getUser(id, users) {
   return undefined;
 }
 
+/**
+ * 
+ * @param {{id: String, sharedKey: Integer}} clients an array of connected
+ * sockets and information about them
+ * @param {String} encryptedPassword password to decrypt 
+ * @param {String} id id of socket 
+ * @returns {String} decrypted password
+ */
+function decryptPassword(clients, encryptedPassword, id) {
+  if(!clients || !encryptedPassword || !id) return undefined;
+  var aes256 = require("aes256");
+  var sharedKey;
+  for(cli of clients) {
+      if(cli.id == id) sharedKey = cli.key;
+  }
+  //decrypt the password using the key
+  var decryptedPassword = aes256.decrypt(sharedKey.toString(), encryptedPassword);
+  return decryptedPassword;
+}
+
+/**
+ * @summary returns a random prime between 5000-10000
+ * @returns {Integer} prime number
+ */
+function randomPrime() {
+  const fs = require('fs')
+  var primeArray = fs.readFileSync("misc/prime-numbers.txt", "utf-8").split("\n");
+  var random = Math.floor(Math.random() * primeArray.length);
+  return parseInt(primeArray[random]);
+}
+
+/**
+ * @summary Gets user with registered email
+ * @param {String} email email of the user
+ * @param {Database} db database to get user from
+ * @returns {String} the username if found, undefined if not
+ */
 function getUserByEmail(email, db) {
   if (!email) return undefined;
   const user = db.prepare(
@@ -418,4 +458,6 @@ exports.updatePassword = updatePassword;
 exports.generateCode = generateCode;
 exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
-exports.getUserByEmail = getUserByEmail
+exports.decryptPassword = decryptPassword;
+exports.randomPrime = randomPrime;
+exports.getUserByEmail = getUserByEmail;
