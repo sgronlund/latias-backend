@@ -1,11 +1,16 @@
 ///Array that maps socket ids to usernames
 let users = [];
 
+let currentlyPlaying = [];
+
 ///Array that maps socket ids to cryptographic keys
 let clients = [];
 
 ///Variable for checking if quiz is ready or not
-let quizReady = false;
+let quizOpen = false;
+
+///Number of clients currently playing the article quiz
+var playerCount = 0;
 
 ///Variable for timeout interval
 let interval;
@@ -230,6 +235,21 @@ server.on("connection", (socket) => {
   });
 
   /**
+   * @summary when a client connects, we increase the
+   * current player number
+   */
+  socket.on("quizConnect", () => {
+    currentlyPlaying.push(socket.id);
+    playerCount++
+  });
+
+  /**
+   * @summary when a client disconnects, we decrease the
+   * current player number
+   */
+  socket.on("quizDisconnect", () => {playerCount--});
+
+  /**
    * @summary emits the current time left until the
    * quiz opens every second
    */
@@ -250,10 +270,14 @@ server.on("connection", (socket) => {
     if (user) console.log("client disconnected with username: " + user);
     else console.log("guest client disconnected");
 
-    console.log(clients);
+    /* Should only decrease player count
+    if the player is currently playing */
+    if(currentlyPlaying.includes(socket.id)) {
+      currentlyPlaying.splice(currentlyPlaying.indexOf(socket.id));
+      playerCount--;
+    }
     users.splice(users.indexOf(user), 1);
     clients.splice(clients.indexOf(socket.id), 1);
-    console.log(clients);
     clearInterval(interval);
   });
 });
@@ -265,10 +289,11 @@ server.on("connection", (socket) => {
  */
 var quizCountdown = new CronJob(
   //"* 20 * * SUN",
-  "*/1 * * * *",
+  "*/10 * * * * *",
   function () {
     server.emit("quizReady");
-    quizReady = true;
+    quizOpen = true;
+    setInterval(() => {server.emit("updatePlayerCount", playerCount)}, 1000);
   },
   null,
   true,
