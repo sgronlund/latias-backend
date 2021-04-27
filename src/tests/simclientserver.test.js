@@ -32,7 +32,7 @@ describe("Test Suite for Server", () => {
       "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
     );
     const tableQuestionsNews = db.prepare(
-      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+      "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
     );
     const tableQuestionsArticle = db.prepare(
       "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
@@ -314,7 +314,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "addQuestionAllUndefined",
       "QUESTION",
-      [undefined, undefined, undefined, undefined],
+      [undefined, undefined, undefined],
       1
     );
   });
@@ -328,7 +328,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "addQuestionFirstUndefined",
       "QUESTION",
-      [undefined, "A", "B", "C"],
+      [undefined, "A", "B"],
       1
     );
   });
@@ -342,7 +342,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "addQuestionSecondUndefined",
       "QUESTION",
-      ["A", undefined, "B", "C"],
+      ["A", undefined, "B"],
       1
     );
   });
@@ -356,24 +356,11 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "addQuestionThirdUndefined",
       "QUESTION",
-      ["A", "B", undefined, "C"],
+      ["A", "B", undefined],
       1
     );
   });
 
-  test("Add question to news quiz with fourth answer as undefined", (done) => {
-    serverSocket.on("addQuestionFourthUndefined", (question, answers, id) => {
-      const operation = backend.addQuestionNews(question, answers, id, db);
-      expect(operation).toBeFalsy();
-      done();
-    });
-    clientSocket.emit(
-      "addQuestionFourthUndefined",
-      "QUESTION",
-      ["A", "B", "C", undefined],
-      1
-    );
-  });
 
   test("Add question to news quiz with too short answer array", (done) => {
     serverSocket.on("addQuestionShort", (question, answers, id) => {
@@ -381,7 +368,7 @@ describe("Test Suite for Server", () => {
       expect(operation).toBeFalsy();
       done();
     });
-    clientSocket.emit("addQuestionShort", "QUESTION", ["A", "B", "C"], 1);
+    clientSocket.emit("addQuestionShort", "QUESTION", ["A", "B"], 1);
   });
 
   test("Add question to news quiz and check for it's existence", (done) => {
@@ -393,7 +380,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "addQuestionExistence",
       "QUESTION",
-      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      ["FALSE1", "FALSE2", "CORRECT"],
       faker.datatype.number({ min: 1, max: 52 })
     );
   });
@@ -409,7 +396,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "addQuestionBusy",
       "QUESTION",
-      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      ["FALSE1", "FALSE2", "CORRECT"],
       faker.datatype.number({ min: 1, max: 52 })
     );
   });
@@ -434,7 +421,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "correctAnswer",
       "QUESTION",
-      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      ["FALSE1", "FALSE2", "CORRECT"],
       faker.datatype.number({ min: 1, max: 52 })
     );
   });
@@ -449,7 +436,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "wrongAnswer",
       "QUESTION",
-      ["FALSE1", "FALSE2", "FALSE3", "CORRECT"],
+      ["FALSE1", "FALSE2", "CORRECT"],
       faker.datatype.number({ min: 1, max: 52 })
     );
   });
@@ -462,7 +449,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "getQuestionInvalidWeek",
       "QUESTION",
-      ["FALSE", "FALSE", "FALSE", "CORRECT"],
+      ["FALSE", "FALSE",, "CORRECT"],
       faker.datatype.number({ min: 53, max: 1000 })
     );
   });
@@ -693,7 +680,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "AddTooMany",
       "QUESTION",
-      ["FALSE", "FALSE", "FALSE", "CORRECT"],
+      ["FALSE", "FALSE", "CORRECT"],
       1
     );
   });
@@ -754,7 +741,7 @@ describe("Test Suite for Server", () => {
       expect(
         backend.addQuestionNews(
           "QUESTION",
-          ["FALSE", "FALSE", "FALSE", "CORRECT"],
+          ["FALSE", "FALSE", "CORRECT"],
           db,
           id
         )
@@ -765,7 +752,6 @@ describe("Test Suite for Server", () => {
         question: "QUESTION",
         wrong1: "FALSE",
         wrong2: "FALSE",
-        wrong3: "FALSE",
         weekNumber: id,
       });
       done();
@@ -822,7 +808,7 @@ describe("Test Suite for Server", () => {
     for (var i = 0; i < 10; i++) {
       backend.addQuestionNews(
         `QUESTION ${i}`,
-        ["FALSE", "FALSE", "FALSE", "CORRECT"],
+        ["FALSE", "FALSE", "CORRECT"],
         db,
         1
       );
@@ -835,7 +821,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -843,7 +829,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -851,7 +837,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -859,7 +845,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -867,7 +853,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -875,7 +861,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -883,7 +869,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -891,7 +877,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -899,7 +885,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
         {
           correct: "CORRECT",
@@ -907,7 +893,7 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          wrong3: "FALSE",
+          
         },
       ];
       expect(backend.getQuestionsNews(db, weekNumber)).toEqual(expected);
@@ -922,7 +908,7 @@ describe("Test Suite for Server", () => {
   });
 
   test("reset questions for a given week number and check that it's no longer in database", (done) => {
-    backend.addQuestionNews("QUESTION", ["a", "b", "c", "d"], 1);
+    backend.addQuestionNews("QUESTION", ["a", "b", "c"], 1);
     expect(backend.resetQuestionsNews(db, 1)).toBeTruthy();
     const getQuestion = db.prepare(
       "SELECT * FROM questions where weekNumber = 1"

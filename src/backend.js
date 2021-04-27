@@ -231,6 +231,7 @@ function checkAnswerNews(question, answer, db) {
  * @returns {Boolean} true if input is correct, false if not
  */
  function addQuestionArticle(question, answers, db, weekNumber) {
+  console.log("tja")
   if (
     !question ||
     !answers ||
@@ -239,8 +240,11 @@ function checkAnswerNews(question, answer, db) {
     !db
   )
     return false;
-  if (answers.length !== 3) return false;
+  console.log("tja1")
+  if (answers.length !== 4) return false;
+  console.log("tja2")
   if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
+  console.log("tja3")
   const checkQuestion = db.prepare(
     "SELECT * FROM questionsArticle WHERE question = ?"
   );
@@ -258,13 +262,14 @@ function checkAnswerNews(question, answer, db) {
   if (amount?.length === 10) return false;
 
   const addQuestion = db.prepare(
-    "INSERT INTO questionsArticle (question, wrong1, wrong2, correct, weekNumber) VALUES (?, ?, ?, ?, ?)"
+    "INSERT INTO questionsArticle (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
   );
   addQuestion.run(
     question,
     answers[0],
     answers[1],
     answers[2],
+    answers[3],
     weekNumber
   );
 
