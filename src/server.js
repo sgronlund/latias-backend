@@ -29,6 +29,9 @@ db.prepare(
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
+db.prepare(
+  "CREATE TABLE IF NOT EXISTS articleQuestions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+).run();
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -154,7 +157,7 @@ server.on("connection", (socket) => {
    * the database is updated with the new question
    */
   socket.on("addQuestion", (question, answers, weekNumber) => {
-    if (backend.addQuestion(question, answers, db, weekNumber))
+    if (backend.addQuestionNews(question, answers, db, weekNumber))
       socket.emit("addQuestionSuccess");
     else socket.emit("addQuestionFailure");
   });
@@ -165,7 +168,7 @@ server.on("connection", (socket) => {
    * and returned to the client socket
    */
   socket.on("getQuestion", (question, weekNumber) => {
-    var getQuestion = backend.getQuestion(question, db, weekNumber);
+    var getQuestion = backend.getQuestionNews(question, db, weekNumber);
     if (getQuestion) socket.emit("getQuestionSuccess", getQuestion);
     else socket.emit("getQuestionFailure");
   });
@@ -176,7 +179,7 @@ server.on("connection", (socket) => {
    * emitted to the client socket
    */
   socket.on("getQuestions", (weekNumber) => {
-    var questions = backend.getQuestions(db, weekNumber);
+    var questions = backend.getQuestionsNews(db, weekNumber);
     if (questions) socket.emit("getQuestionsSuccess", questions);
     else socket.emit("getQuestionsFailure");
   });
@@ -185,7 +188,7 @@ server.on("connection", (socket) => {
    * @summary resets all questions for a given week number
    */
   socket.on("resetQuestions", (weekNumber) => {
-    backend.resetQuestions(db, weekNumber);
+    backend.resetQuestionsNews(db, weekNumber);
   });
 
   /**

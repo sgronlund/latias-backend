@@ -284,7 +284,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with with all arguments as null", (done) => {
     serverSocket.on("addQuestionNull", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -293,7 +293,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with empty array", (done) => {
     serverSocket.on("addQuestionEmpty", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -302,7 +302,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with all answers as undefined", (done) => {
     serverSocket.on("addQuestionAllUndefined", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -316,7 +316,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with first answer as undefined", (done) => {
     serverSocket.on("addQuestionFirstUndefined", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -330,7 +330,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with second answer as undefined", (done) => {
     serverSocket.on("addQuestionSecondUndefined", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -344,7 +344,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with third answer as undefined", (done) => {
     serverSocket.on("addQuestionThirdUndefined", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -358,7 +358,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with fourth answer as undefined", (done) => {
     serverSocket.on("addQuestionFourthUndefined", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -372,7 +372,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with too short answer array", (done) => {
     serverSocket.on("addQuestionShort", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, id, db);
+      const operation = backend.addQuestionNews(question, answers, id, db);
       expect(operation).toBeFalsy();
       done();
     });
@@ -381,7 +381,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question and check for it's existence", (done) => {
     serverSocket.on("addQuestionExistence", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, db, id);
+      const operation = backend.addQuestionNews(question, answers, db, id);
       expect(operation).toBeTruthy();
       done();
     });
@@ -395,8 +395,8 @@ describe("Test Suite for Server", () => {
 
   test("Try adding question that already exists", (done) => {
     serverSocket.on("addQuestionBusy", (question, answers, id) => {
-      const operation = backend.addQuestion(question, answers, db, id);
-      const operationBusy = backend.addQuestion(question, answers, db, id);
+      const operation = backend.addQuestionNews(question, answers, db, id);
+      const operationBusy = backend.addQuestionNews(question, answers, db, id);
       expect(operation).toBeTruthy();
       expect(operationBusy).toBeFalsy();
       done();
@@ -411,8 +411,8 @@ describe("Test Suite for Server", () => {
 
   test("checkAnswer with null arguments", (done) => {
     serverSocket.on("checkAnswerNull", (question, answers, id) => {
-      backend.addQuestion(question, answers, db);
-      const check = backend.checkAnswer(question, answers, id, db);
+      backend.addQuestionNews(question, answers, db);
+      const check = backend.checkAnswerNews(question, answers, id, db);
       expect(check).toBeFalsy();
       done();
     });
@@ -421,8 +421,8 @@ describe("Test Suite for Server", () => {
 
   test("Add question and check with correct answer", (done) => {
     serverSocket.on("correctAnswer", (question, answers, id) => {
-      backend.addQuestion(question, answers, db, id);
-      const check = backend.checkAnswer("QUESTION", "CORRECT", db);
+      backend.addQuestionNews(question, answers, db, id);
+      const check = backend.checkAnswerNews("QUESTION", "CORRECT", db);
       expect(check).toBeTruthy();
       done();
     });
@@ -436,8 +436,8 @@ describe("Test Suite for Server", () => {
 
   test("Add question and check with wrong answer", (done) => {
     serverSocket.on("wrongAnswer", (question, answers, id) => {
-      backend.addQuestion(question, answers, id, db);
-      const check = backend.checkAnswer("QUESTION", "FALSE1", db);
+      backend.addQuestionNews(question, answers, id, db);
+      const check = backend.checkAnswerNews("QUESTION", "FALSE1", db);
       expect(check).toBeFalsy();
       done();
     });
@@ -451,7 +451,7 @@ describe("Test Suite for Server", () => {
 
   test("Add question with invalid week number", (done) => {
     serverSocket.on("getQuestionInvalidWeek", (question, answers, id) => {
-      expect(backend.addQuestion(question, answers, db, id)).toBeFalsy();
+      expect(backend.addQuestionNews(question, answers, db, id)).toBeFalsy();
       done();
     });
     clientSocket.emit(
@@ -465,11 +465,11 @@ describe("Test Suite for Server", () => {
   test("Add 10 questions and try to add 1 more", (done) => {
     serverSocket.on("AddTooMany", (question, answers, id) => {
       for (var i = 0; i < 10; i++) {
-        expect(backend.addQuestion(question + i, answers, db, id)).toBeTruthy();
+        expect(backend.addQuestionNews(question + i, answers, db, id)).toBeTruthy();
       }
 
       expect(
-        backend.addQuestion("too many " + question, answers, db, id)
+        backend.addQuestionNews("too many " + question, answers, db, id)
       ).toBeFalsy();
       done();
     });
@@ -499,7 +499,7 @@ describe("Test Suite for Server", () => {
 
   test("Try getting question with ID as null", (done) => {
     serverSocket.on("getQuestionNullID", (question, id) => {
-      const getQuestion = backend.getQuestion(question, db, id);
+      const getQuestion = backend.getQuestionNews(question, db, id);
       expect(getQuestion).toBeUndefined();
       done();
     });
@@ -508,7 +508,7 @@ describe("Test Suite for Server", () => {
 
   test("Try getting question with question as null", (done) => {
     serverSocket.on("getQuestionNullQuestion", (question, id) => {
-      const getQuestion = backend.getQuestion(question, db, id);
+      const getQuestion = backend.getQuestionNews(question, db, id);
       expect(getQuestion).toBeUndefined();
       done();
     });
@@ -521,7 +521,7 @@ describe("Test Suite for Server", () => {
 
   test("Try getting question that does not exist", (done) => {
     serverSocket.on("getQuestionNotExist", (question, id) => {
-      const getQuestion = backend.getQuestion(question, db, id);
+      const getQuestion = backend.getQuestionNews(question, db, id);
       expect(getQuestion).toBeUndefined();
       done();
     });
@@ -535,14 +535,14 @@ describe("Test Suite for Server", () => {
   test("Get existing question", (done) => {
     serverSocket.on("getQuestion", (question, id) => {
       expect(
-        backend.addQuestion(
+        backend.addQuestionNews(
           "QUESTION",
           ["FALSE", "FALSE", "FALSE", "CORRECT"],
           db,
           id
         )
       ).toBeTruthy();
-      const getQuestion = backend.getQuestion(question, db, id);
+      const getQuestion = backend.getQuestionNews(question, db, id);
       expect(getQuestion).toEqual({
         correct: "CORRECT",
         question: "QUESTION",
@@ -562,7 +562,7 @@ describe("Test Suite for Server", () => {
 
   test("Try getting questions when there are none for the given week", (done) => {
     serverSocket.on("getQuestionsNotExist", (weekNumber) => {
-      const getQuestions = backend.getQuestions(db, weekNumber);
+      const getQuestions = backend.getQuestionsNews(db, weekNumber);
       expect(getQuestions).toBeUndefined();
       done();
     });
@@ -574,7 +574,7 @@ describe("Test Suite for Server", () => {
 
   test("Try getting questions when weekNumber is undefined", (done) => {
     serverSocket.on("getQuestionsUndefined", (weekNumber) => {
-      const getQuestions = backend.getQuestions(db, weekNumber);
+      const getQuestions = backend.getQuestionsNews(db, weekNumber);
       expect(getQuestions).toBeUndefined();
       done();
     });
@@ -583,11 +583,11 @@ describe("Test Suite for Server", () => {
 
   test("Try getting questions with invalid week number", (done) => {
     serverSocket.on("getQuestionTooHigh", (weekNumber) => {
-      const getQuestions = backend.getQuestions(db, weekNumber);
+      const getQuestions = backend.getQuestionsNews(db, weekNumber);
       expect(getQuestions).toBeUndefined();
     });
     serverSocket.on("getQuestionTooLow", (weekNumber) => {
-      const getQuestions = backend.getQuestions(db, weekNumber);
+      const getQuestions = backend.getQuestionsNews(db, weekNumber);
       expect(getQuestions).toBeUndefined();
       done();
     });
@@ -603,7 +603,7 @@ describe("Test Suite for Server", () => {
 
   test("Get questions with exactly 10 questions", (done) => {
     for (var i = 0; i < 10; i++) {
-      backend.addQuestion(
+      backend.addQuestionNews(
         `QUESTION ${i}`,
         ["FALSE", "FALSE", "FALSE", "CORRECT"],
         db,
@@ -693,20 +693,20 @@ describe("Test Suite for Server", () => {
           wrong3: "FALSE",
         },
       ];
-      expect(backend.getQuestions(db, weekNumber)).toEqual(expected);
+      expect(backend.getQuestionsNews(db, weekNumber)).toEqual(expected);
       done();
     });
     clientSocket.emit("getQuestionsCorrect", 1);
   });
 
   test("run reset questions with null parameters", (done) => {
-    expect(backend.resetQuestions()).toBeFalsy();
+    expect(backend.resetQuestionsNews()).toBeFalsy();
     done();
   });
 
   test("reset questions for a given week number and check that it's no longer in database", (done) => {
-    backend.addQuestion("QUESTION", ["a", "b", "c", "d"], 1);
-    expect(backend.resetQuestions(db, 1)).toBeTruthy();
+    backend.addQuestionNews("QUESTION", ["a", "b", "c", "d"], 1);
+    expect(backend.resetQuestionsNews(db, 1)).toBeTruthy();
     const getQuestion = db.prepare(
       "SELECT * FROM questions where weekNumber = 1"
     );

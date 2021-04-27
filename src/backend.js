@@ -88,7 +88,7 @@ the index for removing the user from the array */
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
-function addQuestion(question, answers, db, weekNumber) {
+function addQuestionNews(question, answers, db, weekNumber) {
   if (
     !question ||
     !answers ||
@@ -143,7 +143,7 @@ function addQuestion(question, answers, db, weekNumber) {
  *              wrong3: String,
  *              correct: String }}
  */
-function getQuestion(question, db, weekNumber) {
+function getQuestionNews(question, db, weekNumber) {
   if (!question || !db) return undefined;
   const getAnswer = db.prepare(
     "SELECT * FROM questions where question = ? AND weekNumber = ?"
@@ -167,7 +167,7 @@ function getQuestion(question, db, weekNumber) {
  *              }
  *           , {...}, {...}, ... ]}
  */
-function getQuestions(db, weekNumber) {
+function getQuestionsNews(db, weekNumber) {
   if (!weekNumber || !db) return undefined;
   if (weekNumber > 52 || weekNumber < 1) return undefined;
 
@@ -186,7 +186,7 @@ function getQuestions(db, weekNumber) {
  * @returns {Boolean} true if questions could be reset,
  * false if not
  */
-function resetQuestions(db, weekNumber) {
+function resetQuestionsNews(db, weekNumber) {
   if (!weekNumber || !db) return false;
 
   var deleteQuestions = db.prepare(
@@ -204,7 +204,7 @@ function resetQuestions(db, weekNumber) {
  * @param {Database} db database to check in
  * @returns {Boolean} true if answer is correct, false if not
  */
-function checkAnswer(question, answer, db) {
+function checkAnswerNews(question, answer, db) {
   if (!question || !answer || !db) return false;
 
   const checkAnswer = db.prepare(
@@ -454,11 +454,11 @@ function getUserByEmail(email, db) {
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
-exports.addQuestion = addQuestion;
-exports.getQuestion = getQuestion;
-exports.getQuestions = getQuestions;
-exports.resetQuestions = resetQuestions;
-exports.checkAnswer = checkAnswer;
+exports.addQuestionNews = addQuestionNews;
+exports.getQuestionNews = getQuestionNews;
+exports.getQuestionsNews = getQuestionsNews;
+exports.resetQuestionsNews = resetQuestionsNews;
+exports.checkAnswerNews = checkAnswerNews;
 exports.sendMail = sendMail;
 exports.checkMail = checkMail;
 exports.insertCode = insertCode;
