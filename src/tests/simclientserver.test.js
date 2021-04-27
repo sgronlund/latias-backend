@@ -361,7 +361,6 @@ describe("Test Suite for Server", () => {
     );
   });
 
-
   test("Add question to news quiz with too short answer array", (done) => {
     serverSocket.on("addQuestionShort", (question, answers, id) => {
       const operation = backend.addQuestionNews(question, answers, id, db);
@@ -449,7 +448,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "getQuestionInvalidWeek",
       "QUESTION",
-      ["FALSE", "FALSE",, "CORRECT"],
+      ["FALSE", "FALSE", , "CORRECT"],
       faker.datatype.number({ min: 53, max: 1000 })
     );
   });
@@ -821,7 +820,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -829,7 +827,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -837,7 +834,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -845,7 +841,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -853,7 +848,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -861,7 +855,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -869,7 +862,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -877,7 +869,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -885,7 +876,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
         {
           correct: "CORRECT",
@@ -893,7 +883,6 @@ describe("Test Suite for Server", () => {
           weekNumber: 1,
           wrong1: "FALSE",
           wrong2: "FALSE",
-          
         },
       ];
       expect(backend.getQuestionsNews(db, weekNumber)).toEqual(expected);
