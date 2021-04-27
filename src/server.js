@@ -24,7 +24,7 @@ var CronJob = require("cron").CronJob;
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
+  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), balance INT)"
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -88,13 +88,19 @@ server.on("connection", (socket) => {
       encryptedPassword,
       socket.id
     );
-    var loggedIn = backend.clientLogin(username, password, db, users, socket.id);
-    switch(loggedIn) {
+    var loggedIn = backend.clientLogin(
+      username,
+      password,
+      db,
+      users,
+      socket.id
+    );
+    switch (loggedIn) {
       case "valid":
         socket.emit("loginSuccess");
         break;
       case "root":
-        socket.emit("loginRoot")
+        socket.emit("loginRoot");
         break;
       case "invalidLoggedIn":
         socket.emit("alreadyLoggedIn");
@@ -163,12 +169,12 @@ server.on("connection", (socket) => {
    * the database is updated with the new question
    */
   socket.on("addQuestion", (question, answers, weekNumber) => {
-    console.log(answers)
+    console.log(answers);
     if (backend.addQuestionNews(question, answers, db, weekNumber)) {
-      console.log("check")
+      console.log("check");
       socket.emit("addQuestionSuccess");
     } else {
-      console.log("failadeCheck")
+      console.log("failadeCheck");
       socket.emit("addQuestionFailure");
     }
   });
@@ -206,7 +212,7 @@ server.on("connection", (socket) => {
    * @summary When the socket receives an addQuestion signal,
    * the database is updated with the new question
    */
-   socket.on("addQuestionArticle", (question, answers, weekNumber) => {
+  socket.on("addQuestionArticle", (question, answers, weekNumber) => {
     if (backend.addQuestionArticle(question, answers, db, weekNumber))
       socket.emit("addQuestionArticleSuccess");
     else socket.emit("addQuestionArticleFailure");
@@ -252,6 +258,17 @@ server.on("connection", (socket) => {
     else socket.emit("returnUserFailure");
   });
 
+  /**
+   * @summary When the socket receives a getBalance signal,
+   * the balance is fetched from the database and
+   * returned to the client socket
+   */
+  socket.on("getBalance", (id) => {
+    var balance = backend.getBalance(id, users);
+    if (balance !== undefined) socket.emit("returnBalanceSuccess", balance);
+    else socket.emit("returnBalanceFailure");
+  });
+
   let g, p;
 
   //TODO: document this
@@ -293,14 +310,16 @@ server.on("connection", (socket) => {
    */
   socket.on("quizConnect", () => {
     currentlyPlaying.push(socket.id);
-    playerCount++
+    playerCount++;
   });
 
   /**
    * @summary when a client disconnects, we decrease the
    * current player number
    */
-  socket.on("quizDisconnect", () => {playerCount--});
+  socket.on("quizDisconnect", () => {
+    playerCount--;
+  });
 
   /**
    * @summary emits the current time left until the
@@ -325,7 +344,7 @@ server.on("connection", (socket) => {
 
     /* Should only decrease player count
     if the player is currently playing */
-    if(currentlyPlaying.includes(socket.id)) {
+    if (currentlyPlaying.includes(socket.id)) {
       currentlyPlaying.splice(currentlyPlaying.indexOf(socket.id));
       playerCount--;
     }
@@ -346,7 +365,9 @@ var quizCountdown = new CronJob(
   function () {
     server.emit("quizReady");
     quizOpen = true;
-    setInterval(() => {server.emit("updatePlayerCount", playerCount)}, 1000);
+    setInterval(() => {
+      server.emit("updatePlayerCount", playerCount);
+    }, 1000);
   },
   null,
   true,

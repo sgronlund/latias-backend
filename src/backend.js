@@ -26,9 +26,9 @@ function clientRegister(username, password, email, db) {
   if (user) return false; //If username or email is busy, return false
 
   const addUser = db.prepare(
-    "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
+    "INSERT INTO users (username, password, email, balance) VALUES (?, ?, ?, ?)"
   ); //resetcode not generated yet
-  addUser.run(username, password, email);
+  addUser.run(username, password, email, 0);
 
   return true;
 }
@@ -49,19 +49,20 @@ function clientLogin(username, password, db, users, id) {
   )
     return "root";
   for (user of users) {
-    if(user.username === username) {
-      return "invalidloggedin"
+    if (user.username === username) {
+      return "invalidloggedin";
     }
   }
-  users.push({ ID: id, username: username });
 
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? AND password = ?"
   );
   var user = checkUser.get(username, password);
 
-  if (user) return "valid";
-  else return "invalid";
+  if (user) {
+    users.push({ ID: id, username: username, balance: user.balance });
+    return "valid";
+  } else return "invalid";
 }
 
 /**
@@ -124,13 +125,7 @@ function addQuestionNews(question, answers, db, weekNumber) {
   const addQuestion = db.prepare(
     "INSERT INTO questions (question, wrong1, wrong2, correct, weekNumber) VALUES (?, ?, ?, ?, ?)"
   );
-  addQuestion.run(
-    question,
-    answers[0],
-    answers[1],
-    answers[2],
-    weekNumber
-  );
+  addQuestion.run(question, answers[0], answers[1], answers[2], weekNumber);
 
   return true;
 }
@@ -230,7 +225,7 @@ function checkAnswerNews(question, answer, db) {
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
- function addQuestionArticle(question, answers, db, weekNumber) {
+function addQuestionArticle(question, answers, db, weekNumber) {
   if (
     !question ||
     !answers ||
@@ -240,7 +235,8 @@ function checkAnswerNews(question, answer, db) {
   )
     return false;
   if (answers.length !== 4) return false;
-  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1)
+    return false;
   const checkQuestion = db.prepare(
     "SELECT * FROM questionsArticle WHERE question = ?"
   );
@@ -284,11 +280,13 @@ function checkAnswerNews(question, answer, db) {
  *              }
  *           , {...}, {...}, ... ]}
  */
- function getQuestionsArticle(db, weekNumber) {
+function getQuestionsArticle(db, weekNumber) {
   if (!weekNumber || !db) return undefined;
   if (weekNumber > 52 || weekNumber < 1) return undefined;
 
-  const getAnswer = db.prepare("SELECT * FROM questionsArticle where weekNumber = ?");
+  const getAnswer = db.prepare(
+    "SELECT * FROM questionsArticle where weekNumber = ?"
+  );
   getAnswers = getAnswer.all(weekNumber);
 
   if (getAnswers?.length === 0) return undefined;
@@ -466,7 +464,7 @@ function checkMail(email, db) {
  */
 function calculateTimeToDateSeconds(date) {
   var now = new Date();
-  var timeToDate = date.getTime()/1000 - now.getTime()/1000;
+  var timeToDate = date.getTime() / 1000 - now.getTime() / 1000;
   return timeToDate;
 }
 
@@ -509,6 +507,16 @@ function getUser(id, users) {
     if (user.ID === id) {
       return user.username;
     }
+  }
+  return undefined;
+}
+
+function getBalance(id, users) {
+  if (!id || !users) return undefined;
+
+  const user = users.find((user) => user.ID === id);
+  if (user) {
+    return user.balance;
   }
   return undefined;
 }
@@ -589,6 +597,7 @@ exports.generateCode = generateCode;
 exports.calculateTimeToDateSeconds = calculateTimeToDateSeconds;
 exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
+exports.getBalance = getBalance;
 exports.decryptPassword = decryptPassword;
 exports.randomPrime = randomPrime;
 exports.getUserByEmail = getUserByEmail;
