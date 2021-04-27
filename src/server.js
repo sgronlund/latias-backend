@@ -16,9 +16,10 @@ var playerCount = 0;
 let interval;
 
 var backend = require("./backend");
-var app = require("express")();
+var app = require("express")("192.168.0.104");
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
+var CryptoJS = require("crypto-js")
 var CronJob = require("cron").CronJob;
 
 const Database = require("better-sqlite3");
@@ -86,9 +87,9 @@ server.on("connection", (socket) => {
         if(cli.id == socket.id) sharedKey = cli.key;
     }
     //decrypt the password using the key
-    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
-
-
+    
+    var password = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString()).toString(CryptoJS.enc.Utf8);
+    
     if (backend.clientLogin(username, password, db, users, id) === "valid") {
       socket.emit("loginSuccess");
     } else if (backend.clientLogin(username, password, db, users, id) === "root") {
@@ -261,7 +262,7 @@ server.on("connection", (socket) => {
     socket.emit("timeLeft", backend.stringifySeconds(seconds));
 
     //Debug
-    console.log(backend.stringifySeconds(seconds));
+    //console.log(backend.stringifySeconds(seconds));
   }, 1000);
 
   /**
