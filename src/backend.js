@@ -101,7 +101,7 @@ function addQuestionNews(question, answers, db, weekNumber) {
     !db
   )
     return false;
-  if (answers.length !== 4) return false;
+  if (answers.length !== 3) return false;
   if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1)
     return false;
 
@@ -122,14 +122,13 @@ function addQuestionNews(question, answers, db, weekNumber) {
   if (amount?.length === 10) return false;
 
   const addQuestion = db.prepare(
-    "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO questions (question, wrong1, wrong2, correct, weekNumber) VALUES (?, ?, ?, ?, ?)"
   );
   addQuestion.run(
     question,
     answers[0],
     answers[1],
     answers[2],
-    answers[3],
     weekNumber
   );
 
@@ -165,7 +164,6 @@ function getQuestionNews(question, db, weekNumber) {
  *           { question: String,
  *              wrong1: String,
  *              wrong2: String,
- *              wrong3: String,
  *              correct: String,
  *              weekNumber: Integer
  *              }
@@ -241,10 +239,8 @@ function checkAnswerNews(question, answer, db) {
     !db
   )
     return false;
-  if (answers.length !== 4) return false;
-  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1)
-    return false;
-
+  if (answers.length !== 3) return false;
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
   const checkQuestion = db.prepare(
     "SELECT * FROM questionsArticle WHERE question = ?"
   );
@@ -262,14 +258,13 @@ function checkAnswerNews(question, answer, db) {
   if (amount?.length === 10) return false;
 
   const addQuestion = db.prepare(
-    "INSERT INTO questionsArticle (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO questionsArticle (question, wrong1, wrong2, correct, weekNumber) VALUES (?, ?, ?, ?, ?)"
   );
   addQuestion.run(
     question,
     answers[0],
     answers[1],
     answers[2],
-    answers[3],
     weekNumber
   );
 
@@ -284,7 +279,6 @@ function checkAnswerNews(question, answer, db) {
  *           { question: String,
  *              wrong1: String,
  *              wrong2: String,
- *              wrong3: String,
  *              correct: String,
  *              weekNumber: Integer
  *              }

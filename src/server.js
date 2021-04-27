@@ -27,7 +27,7 @@ db.prepare(
   "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
 ).run();
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+  "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
@@ -163,9 +163,14 @@ server.on("connection", (socket) => {
    * the database is updated with the new question
    */
   socket.on("addQuestion", (question, answers, weekNumber) => {
-    if (backend.addQuestionNews(question, answers, db, weekNumber))
+    console.log(answers)
+    if (backend.addQuestionNews(question, answers, db, weekNumber)) {
+      console.log("check")
       socket.emit("addQuestionSuccess");
-    else socket.emit("addQuestionFailure");
+    } else {
+      console.log("failadeCheck")
+      socket.emit("addQuestionFailure");
+    }
   });
 
   /**
@@ -307,7 +312,7 @@ server.on("connection", (socket) => {
     socket.emit("timeLeft", backend.stringifySeconds(seconds));
 
     //Debug
-    console.log(backend.stringifySeconds(seconds));
+    //console.log(backend.stringifySeconds(seconds));
   }, 1000);
 
   /**
