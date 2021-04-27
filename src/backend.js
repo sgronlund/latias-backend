@@ -231,7 +231,6 @@ function checkAnswerNews(question, answer, db) {
  * @returns {Boolean} true if input is correct, false if not
  */
  function addQuestionArticle(question, answers, db, weekNumber) {
-  console.log("tja")
   if (
     !question ||
     !answers ||
@@ -240,16 +239,12 @@ function checkAnswerNews(question, answer, db) {
     !db
   )
     return false;
-  console.log("tja1")
   if (answers.length !== 4) return false;
-  console.log("tja2")
   if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
-  console.log("tja3")
   const checkQuestion = db.prepare(
     "SELECT * FROM questionsArticle WHERE question = ?"
   );
   var questionExists = checkQuestion.get(question);
-  console.log(questionExists);
 
   if (questionExists) return false;
   const checkAmount = db.prepare(
