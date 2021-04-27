@@ -27,7 +27,10 @@ db.prepare(
   "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
 ).run();
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+  "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
+).run();
+db.prepare(
+  "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
 
 /**
@@ -79,23 +82,27 @@ server.on("connection", (socket) => {
    * the username and password is checked and a
    * corresponding success/fail message is sent
    */
-  socket.on("login", (username, encryptedPassword, id) => {
-    //fetch the key that was used to encrypt the password
-    var sharedKey;
-    for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
+  socket.on("login", (username, encryptedPassword) => {
+    var password = backend.decryptPassword(
+      clients,
+      encryptedPassword,
+      socket.id
+    );
+    var loggedIn = backend.clientLogin(username, password, db, users, socket.id);
+    switch(loggedIn) {
+      case "valid":
+        socket.emit("loginSuccess");
+        break;
+      case "root":
+        socket.emit("loginRoot")
+        break;
+      case "invalidLoggedIn":
+        socket.emit("alreadyLoggedIn");
+        break;
+      default:
+        socket.emit("loginFailure");
+        break;
     }
-    //decrypt the password using the key
-    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
-
-
-    if (backend.clientLogin(username, password, db, users, id) === "valid") {
-      socket.emit("loginSuccess");
-    } else if (backend.clientLogin(username, password, db, users, id) === "root") {
-      socket.emit("loginRoot");
-    } else if (backend.clientLogin(username, password, db, users, id) === "invalidloggedin") {
-      socket.emit("alreadyLoggedIn");
-    } else {socket.emit("loginFailure")};
   });
 
   /**
@@ -156,9 +163,14 @@ server.on("connection", (socket) => {
    * the database is updated with the new question
    */
   socket.on("addQuestion", (question, answers, weekNumber) => {
-    if (backend.addQuestion(question, answers, db, weekNumber))
+    console.log(answers)
+    if (backend.addQuestionNews(question, answers, db, weekNumber)) {
+      console.log("check")
       socket.emit("addQuestionSuccess");
-    else socket.emit("addQuestionFailure");
+    } else {
+      console.log("failadeCheck")
+      socket.emit("addQuestionFailure");
+    }
   });
 
   /**
@@ -167,7 +179,7 @@ server.on("connection", (socket) => {
    * and returned to the client socket
    */
   socket.on("getQuestion", (question, weekNumber) => {
-    var getQuestion = backend.getQuestion(question, db, weekNumber);
+    var getQuestion = backend.getQuestionNews(question, db, weekNumber);
     if (getQuestion) socket.emit("getQuestionSuccess", getQuestion);
     else socket.emit("getQuestionFailure");
   });
@@ -178,7 +190,7 @@ server.on("connection", (socket) => {
    * emitted to the client socket
    */
   socket.on("getQuestions", (weekNumber) => {
-    var questions = backend.getQuestions(db, weekNumber);
+    var questions = backend.getQuestionsNews(db, weekNumber);
     if (questions) socket.emit("getQuestionsSuccess", questions);
     else socket.emit("getQuestionsFailure");
   });
@@ -187,7 +199,46 @@ server.on("connection", (socket) => {
    * @summary resets all questions for a given week number
    */
   socket.on("resetQuestions", (weekNumber) => {
-    backend.resetQuestions(db, weekNumber);
+    backend.resetQuestionsNews(db, weekNumber);
+  });
+
+  /**
+   * @summary When the socket receives an addQuestion signal,
+   * the database is updated with the new question
+   */
+   socket.on("addQuestionArticle", (question, answers, weekNumber) => {
+    if (backend.addQuestionArticle(question, answers, db, weekNumber))
+      socket.emit("addQuestionArticleSuccess");
+    else socket.emit("addQuestionArticleFailure");
+  });
+
+  /**
+   * @summary When the socket receives a getQuestion signal,
+   * the question and answers are fetched from the database
+   * and returned to the client socket
+   */
+  socket.on("getQuestionArticle", (question, weekNumber) => {
+    var getQuestion = backend.getQuestionArticle(question, db, weekNumber);
+    if (getQuestion) socket.emit("getQuestionArticleSuccess", getQuestion);
+    else socket.emit("getQuestionArticleFailure");
+  });
+
+  /**
+   * @summary When the socket receives a getQuestions signal,
+   * all questions with the given weekNumber are returned and
+   * emitted to the client socket
+   */
+  socket.on("getQuestionsArticle", (weekNumber) => {
+    var questions = backend.getQuestionsArticle(db, weekNumber);
+    if (questions) socket.emit("getQuestionsArticleSuccess", questions);
+    else socket.emit("getQuestionsArticleFailure");
+  });
+
+  /**
+   * @summary resets all questions for a given week number
+   */
+  socket.on("resetQuestionsArticle", (weekNumber) => {
+    backend.resetQuestionsArticle(db, weekNumber);
   });
 
   /**
@@ -261,7 +312,7 @@ server.on("connection", (socket) => {
     socket.emit("timeLeft", backend.stringifySeconds(seconds));
 
     //Debug
-    console.log(backend.stringifySeconds(seconds));
+    //console.log(backend.stringifySeconds(seconds));
   }, 1000);
 
   /**

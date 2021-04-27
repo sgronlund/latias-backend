@@ -92,7 +92,7 @@ the index for removing the user from the array */
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
-function addQuestion(question, answers, db, weekNumber) {
+function addQuestionNews(question, answers, db, weekNumber) {
   if (
     !question ||
     !answers ||
@@ -101,7 +101,7 @@ function addQuestion(question, answers, db, weekNumber) {
     !db
   )
     return false;
-  if (answers.length !== 4) return false;
+  if (answers.length !== 3) return false;
   if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1)
     return false;
 
@@ -122,14 +122,13 @@ function addQuestion(question, answers, db, weekNumber) {
   if (amount?.length === 10) return false;
 
   const addQuestion = db.prepare(
-    "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO questions (question, wrong1, wrong2, correct, weekNumber) VALUES (?, ?, ?, ?, ?)"
   );
   addQuestion.run(
     question,
     answers[0],
     answers[1],
     answers[2],
-    answers[3],
     weekNumber
   );
 
@@ -147,7 +146,7 @@ function addQuestion(question, answers, db, weekNumber) {
  *              wrong3: String,
  *              correct: String }}
  */
-function getQuestion(question, db, weekNumber) {
+function getQuestionNews(question, db, weekNumber) {
   if (!question || !db) return undefined;
   const getAnswer = db.prepare(
     "SELECT * FROM questions where question = ? AND weekNumber = ?"
@@ -165,13 +164,12 @@ function getQuestion(question, db, weekNumber) {
  *           { question: String,
  *              wrong1: String,
  *              wrong2: String,
- *              wrong3: String,
  *              correct: String,
  *              weekNumber: Integer
  *              }
  *           , {...}, {...}, ... ]}
  */
-function getQuestions(db, weekNumber) {
+function getQuestionsNews(db, weekNumber) {
   if (!weekNumber || !db) return undefined;
   if (weekNumber > 52 || weekNumber < 1) return undefined;
 
@@ -190,7 +188,7 @@ function getQuestions(db, weekNumber) {
  * @returns {Boolean} true if questions could be reset,
  * false if not
  */
-function resetQuestions(db, weekNumber) {
+function resetQuestionsNews(db, weekNumber) {
   if (!weekNumber || !db) return false;
 
   var deleteQuestions = db.prepare(
@@ -208,11 +206,126 @@ function resetQuestions(db, weekNumber) {
  * @param {Database} db database to check in
  * @returns {Boolean} true if answer is correct, false if not
  */
-function checkAnswer(question, answer, db) {
+function checkAnswerNews(question, answer, db) {
   if (!question || !answer || !db) return false;
 
   const checkAnswer = db.prepare(
     "SELECT * FROM questions where question = ? AND correct = ?"
+  );
+  var correct = checkAnswer.get(question, answer);
+  if (correct) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * @summary Adds a new question along with it's answers to
+ * the database.
+ * @param {String} question The question to add
+ * @param {[String, String, String, String]} answers An array
+ * of strings representing each answer
+ * @param {Integer} weekNumber id of the quiz
+ * @param {Database} db database to add question to
+ * @returns {Boolean} true if input is correct, false if not
+ */
+ function addQuestionArticle(question, answers, db, weekNumber) {
+  if (
+    !question ||
+    !answers ||
+    answers.includes(undefined) ||
+    !weekNumber ||
+    !db
+  )
+    return false;
+  if (answers.length !== 4) return false;
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
+  const checkQuestion = db.prepare(
+    "SELECT * FROM questionsArticle WHERE question = ?"
+  );
+  var questionExists = checkQuestion.get(question);
+
+  if (questionExists) return false;
+  const checkAmount = db.prepare(
+    "SELECT * FROM questionsArticle where weekNumber = ?"
+  );
+  amount = checkAmount.all(weekNumber);
+
+  //If amount is undefined, the ? will make sure the whole statement is undefined
+  //instead of trying to access length from an undefined value
+  if (amount?.length === 10) return false;
+
+  const addQuestion = db.prepare(
+    "INSERT INTO questionsArticle (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
+  );
+  addQuestion.run(
+    question,
+    answers[0],
+    answers[1],
+    answers[2],
+    answers[3],
+    weekNumber
+  );
+
+  return true;
+}
+
+/**
+ * @summary gets all questions with a given weekNumber
+ * @param {Database} db database to look up in
+ * @param {Integer} weekNumber the week number of the quiz
+ * @returns {[
+ *           { question: String,
+ *              wrong1: String,
+ *              wrong2: String,
+ *              correct: String,
+ *              weekNumber: Integer
+ *              }
+ *           , {...}, {...}, ... ]}
+ */
+ function getQuestionsArticle(db, weekNumber) {
+  if (!weekNumber || !db) return undefined;
+  if (weekNumber > 52 || weekNumber < 1) return undefined;
+
+  const getAnswer = db.prepare("SELECT * FROM questionsArticle where weekNumber = ?");
+  getAnswers = getAnswer.all(weekNumber);
+
+  if (getAnswers?.length === 0) return undefined;
+
+  return getAnswers;
+}
+
+/**
+ * @summary Resets all questions for a given week number
+ * @param {Database} db database to reset in
+ * @param {Integer} weekNumber number of the week
+ * @returns {Boolean} true if questions could be reset,
+ * false if not
+ */
+function resetQuestionsArticle(db, weekNumber) {
+  if (!weekNumber || !db) return false;
+
+  var deleteQuestions = db.prepare(
+    "DELETE FROM questionsArticle WHERE weekNumber = ?"
+  );
+  deleteQuestions.run(weekNumber);
+  return true;
+}
+
+/**
+ * @summary Checks in the database if the question is in the
+ * database and if the answer matches the correct one
+ * @param {String} question The question to check
+ * @param {String} answer The answer to check
+ * @param {Database} db database to check in
+ * @returns {Boolean} true if answer is correct, false if not
+ */
+function checkAnswerArticle(question, answer, db) {
+  if (!question || !answer || !db) return false;
+
+  const checkAnswer = db.prepare(
+    "SELECT * FROM questionsArticle where question = ? AND correct = ?"
   );
   var correct = checkAnswer.get(question, answer);
   if (correct) {
@@ -458,11 +571,15 @@ function getUserByEmail(email, db) {
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
-exports.addQuestion = addQuestion;
-exports.getQuestion = getQuestion;
-exports.getQuestions = getQuestions;
-exports.resetQuestions = resetQuestions;
-exports.checkAnswer = checkAnswer;
+exports.addQuestionNews = addQuestionNews;
+exports.getQuestionNews = getQuestionNews;
+exports.getQuestionsNews = getQuestionsNews;
+exports.resetQuestionsNews = resetQuestionsNews;
+exports.checkAnswerNews = checkAnswerNews;
+exports.addQuestionArticle = addQuestionArticle;
+exports.getQuestionsArticle = getQuestionsArticle;
+exports.resetQuestionsArticle = resetQuestionsArticle;
+exports.checkAnswerArticle = checkAnswerArticle;
 exports.sendMail = sendMail;
 exports.checkMail = checkMail;
 exports.insertCode = insertCode;
