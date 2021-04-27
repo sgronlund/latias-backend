@@ -30,7 +30,7 @@ db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS articleQuestions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+  "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
 
 /**
@@ -88,15 +88,21 @@ server.on("connection", (socket) => {
       encryptedPassword,
       socket.id
     );
-    if (
-      backend.clientLogin(username, password, db, users, socket.id) === "valid"
-    )
-      socket.emit("loginSuccess");
-    else if (
-      backend.clientLogin(username, password, db, users, socket.id) === "root"
-    )
-      socket.emit("loginRoot");
-    else socket.emit("loginFailure");
+    var loggedIn = backend.clientLogin(username, password, db, users, socket.id);
+    switch(loggedIn) {
+      case "valid":
+        socket.emit("loginSuccess");
+        break;
+      case "root":
+        socket.emit("loginRoot")
+        break;
+      case "invalidLoggedIn":
+        socket.emit("alreadyLoggedIn");
+        break;
+      default:
+        socket.emit("loginFailure");
+        break;
+    }
   });
 
   /**
@@ -189,6 +195,45 @@ server.on("connection", (socket) => {
    */
   socket.on("resetQuestions", (weekNumber) => {
     backend.resetQuestionsNews(db, weekNumber);
+  });
+
+  /**
+   * @summary When the socket receives an addQuestion signal,
+   * the database is updated with the new question
+   */
+   socket.on("addQuestionArticle", (question, answers, weekNumber) => {
+    if (backend.addQuestionArticle(question, answers, db, weekNumber))
+      socket.emit("addQuestionArticleSuccess");
+    else socket.emit("addQuestionArticleFailure");
+  });
+
+  /**
+   * @summary When the socket receives a getQuestion signal,
+   * the question and answers are fetched from the database
+   * and returned to the client socket
+   */
+  socket.on("getQuestionArticle", (question, weekNumber) => {
+    var getQuestion = backend.getQuestionArticle(question, db, weekNumber);
+    if (getQuestion) socket.emit("getQuestionArticleSuccess", getQuestion);
+    else socket.emit("getQuestionArticleFailure");
+  });
+
+  /**
+   * @summary When the socket receives a getQuestions signal,
+   * all questions with the given weekNumber are returned and
+   * emitted to the client socket
+   */
+  socket.on("getQuestionsArticle", (weekNumber) => {
+    var questions = backend.getQuestionsArticle(db, weekNumber);
+    if (questions) socket.emit("getQuestionsArticleSuccess", questions);
+    else socket.emit("getQuestionsArticleFailure");
+  });
+
+  /**
+   * @summary resets all questions for a given week number
+   */
+  socket.on("resetQuestionsArticle", (weekNumber) => {
+    backend.resetQuestionsArticle(db, weekNumber);
   });
 
   /**
