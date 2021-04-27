@@ -7,7 +7,17 @@ var bigInt = require("big-integer");
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
-db.prepare("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))").run();
+db.prepare("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)").run();
+
+/////////////////
+// LEADERBOARD //
+/////////////////
+var leaderboard = backend.getTopPlayers(db);
+updateLeaderboard = () => {
+  leaderboard = backend.getTopPlayers(db);
+}
+setInterval(updateLeaderboard, 60*1000); //varje minut uppdateras leaderboard
+//////////////////
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -148,6 +158,18 @@ server.on("connection", (socket) => {
   socket.on("resetQuestions", (weekNumber) => {backend.resetQuestions(db, weekNumber)})
 
   /**
+     * @summary When the user has answered all the questions in a 
+     * news quiz, he/she submits the amount of answers that were 
+     * correct and gets their score increased
+     */ 
+  socket.on("submitAnswers", (correctAnswers) => {
+    var username = backend.getUser(socket.id, users);
+    var currentScore = backend.getScore(username, db);
+    var newScore = currentScore + correctAnswers;
+    backend.updateScore(username, newScore, db);
+  })
+
+  /**
    * @summary When the socket receives a getUser signal,
    * the username is fetched from the database and
    * returned to the client socket
@@ -157,6 +179,17 @@ server.on("connection", (socket) => {
     if (user) socket.emit("returnUserSuccess", user);
     else socket.emit("returnUserFailure");
   });
+
+  /**
+   * @function
+   * @summary will send the current version of the leaderboard to a requesting client
+   */
+   socket.on('getLeaderboard', () => {
+    console.log("skickar leaderboard");
+    socket.emit('updatedLB', leaderboard);
+  });
+
+
 
   let g,p;
 

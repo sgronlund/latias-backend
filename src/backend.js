@@ -18,7 +18,7 @@ function clientRegister(username, password, email, db) {
   
   //This should only be necessary while testing as the table SHOULD exist already
   const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
+    "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
   );
   table.run();
   const checkUser = db.prepare(
@@ -29,9 +29,9 @@ function clientRegister(username, password, email, db) {
   if (user) return false; //If username or email is busy, return false
 
   const addUser = db.prepare(
-    "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
+    "INSERT INTO users (username, password, email, score) VALUES (?, ?, ?, ?)"
   ); //resetcode not generated yet
-  addUser.run(username, password, email);
+  addUser.run(username, password, email, 0);
 
   return true;
 }
@@ -392,6 +392,17 @@ function getUser(id, users) {
 }
 
 /**
+ * @function
+ * @summary gets the top 5 players from the database
+ * @param {Database} db the database
+ * @returns {Array} an array of 5 users and their score
+ */
+ function getTopPlayers(db) {
+  const users = db.prepare(`SELECT username, score FROM users ORDER BY score DESC LIMIT 5`).all();
+  return users;
+}
+
+/**
  * 
  * @param {{id: String, sharedKey: Integer}} clients an array of connected
  * sockets and information about them
@@ -441,6 +452,33 @@ function getUserByEmail(email, db) {
   }
 }
 
+/**
+ * Fetches the score from a user from the database
+ * @param {String} username the user we want to get score from
+ * @param {Database} db the database
+ * @returns {Number} the score of the user
+ */
+ function getScore(username, db) {
+  const checkScore = db.prepare(
+    "SELECT score from users where username = ?"
+  )
+  var score = checkScore.get(username);
+  console.log(score.score);
+  return parseInt(score.score);
+}
+/**
+ * Updates the score of a user in the database
+ * @param {String} username the user we want to get score from
+ * @param {Number} newScore the updated score
+ * @param {database} db the database
+ */
+function updateScore(username, newScore, db) {
+  const updateScore = db.prepare(
+    "UPDATE users SET score = ? WHERE username = ?"
+  )
+  updateScore.run(newScore,username);
+}
+
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
@@ -460,3 +498,6 @@ exports.getUser = getUser;
 exports.decryptPassword = decryptPassword;
 exports.randomPrime = randomPrime;
 exports.getUserByEmail = getUserByEmail;
+exports.updateScore = updateScore;
+exports.getScore = getScore;
+exports.getTopPlayers = getTopPlayers;
