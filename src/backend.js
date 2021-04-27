@@ -297,7 +297,7 @@ function checkAnswerNews(question, answer, db) {
   const getAnswer = db.prepare("SELECT * FROM questionsArticle where weekNumber = ?");
   getAnswers = getAnswer.all(weekNumber);
 
-  if (getAnswers.length === 0) return undefined;
+  if (getAnswers?.length === 0) return undefined;
 
   return getAnswers;
 }
