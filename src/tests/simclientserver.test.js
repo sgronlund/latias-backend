@@ -650,7 +650,9 @@ describe("Test Suite for Server", () => {
   test("Add 10 questions and try to add 1 more", (done) => {
     serverSocket.on("AddTooMany", (question, answers, id) => {
       for (var i = 0; i < 10; i++) {
-        expect(backend.addQuestionNews(question + i, answers, db, id)).toBeTruthy();
+        expect(
+          backend.addQuestionNews(question + i, answers, db, id)
+        ).toBeTruthy();
       }
 
       expect(
