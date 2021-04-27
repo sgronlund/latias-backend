@@ -523,17 +523,15 @@ function getUser(id, users) {
  */
 function decryptPassword(clients, encryptedPassword, id) {
   if (!clients || !encryptedPassword || !id) return undefined;
-  var aes256 = require("aes256");
+  var CryptoJS = require("crypto-js")
   var sharedKey;
   for (cli of clients) {
     if (cli.id == id) sharedKey = cli.key;
   }
   if (!sharedKey) return undefined;
   //decrypt the password using the key
-  var decryptedPassword = aes256.decrypt(
-    sharedKey.toString(),
-    encryptedPassword
-  );
+  var decryptedPassword = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString()).toString(CryptoJS.enc.Utf8);
+  
   return decryptedPassword;
 }
 

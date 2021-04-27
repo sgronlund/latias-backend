@@ -16,9 +16,10 @@ var playerCount = 0;
 let interval;
 
 var backend = require("./backend");
-var app = require("express")();
+var app = require("express")("192.168.0.104");
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
+var CryptoJS = require("crypto-js")
 var CronJob = require("cron").CronJob;
 
 const Database = require("better-sqlite3");
