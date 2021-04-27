@@ -46,7 +46,11 @@ function clientRegister(username, password, email, db) {
 function clientLogin(username, password, db, users, id) {
   if (!username || !password || !db || !users || !id) return "invalid";
   if (username === "root" && password === "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653") return "root";
-
+  for (user of users) {
+    if(user.username === username) {
+      return "invalidloggedin"
+    }
+  }
   users.push({ ID: id, username: username });
 
   const checkUser = db.prepare(

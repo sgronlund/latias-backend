@@ -72,11 +72,15 @@ server.on("connection", (socket) => {
     var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
 
 
-    if (backend.clientLogin(username, password, db, users, id) === "valid")
+    if (backend.clientLogin(username, password, db, users, id) === "valid") {
+      console.log("kunde")
       socket.emit("loginSuccess");
-    else if (backend.clientLogin(username, password, db, users, id) === "root")
+    } else if (backend.clientLogin(username, password, db, users, id) === "root") {
+      console.log("kunde inte")
       socket.emit("loginRoot");
-    else socket.emit("loginFailure");
+    } else if (backend.clientLogin(username, password, db, users, id) === "invalidloggedin") {
+      socket.emit("alreadyLoggedIn");
+    } else {socket.emit("loginFailure")};
   });
 
   /**
