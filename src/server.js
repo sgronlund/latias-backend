@@ -1,14 +1,34 @@
+///Array that maps socket ids to usernames
 let users = [];
+
+let currentlyPlaying = [];
+
+///Array that maps socket ids to cryptographic keys
 let clients = [];
-var backend = require('./backend')
+
+///Variable for checking if quiz is ready or not
+let quizOpen = false;
+
+///Number of clients currently playing the article quiz
+var playerCount = 0;
+
+///Variable for timeout interval
+let interval;
+
+var backend = require("./backend");
 var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
-var aes256 = require("aes256");
+var CronJob = require("cron").CronJob;
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
-db.prepare("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))").run();
+db.prepare(
+  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
+).run();
+db.prepare(
+  "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+).run();
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -43,14 +63,11 @@ server.on("connection", (socket) => {
    */
 
   socket.on("register", (username, encryptedPassword, email) => {
-    //fetch the key that was used to encrypt the password
-    var sharedKey;
-    for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
-    }
-    //decrypt the password using the key
-    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
-
+    var password = backend.decryptPassword(
+      clients,
+      encryptedPassword,
+      socket.id
+    );
     console.log(username + " borde ha " + password + " som lösen i databasen");
     if (backend.clientRegister(username, password, email, db))
       socket.emit("registerSuccess");
@@ -73,10 +90,8 @@ server.on("connection", (socket) => {
 
 
     if (backend.clientLogin(username, password, db, users, id) === "valid") {
-      console.log("kunde")
       socket.emit("loginSuccess");
     } else if (backend.clientLogin(username, password, db, users, id) === "root") {
-      console.log("kunde inte")
       socket.emit("loginRoot");
     } else if (backend.clientLogin(username, password, db, users, id) === "invalidloggedin") {
       socket.emit("alreadyLoggedIn");
@@ -89,7 +104,7 @@ server.on("connection", (socket) => {
    * if it does, logs out user and sends a success message,
    * otherwise failure message
    */
-    socket.on("logout", (id) => {
+  socket.on("logout", (id) => {
     if (backend.clientLogout(id, users) === true) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
@@ -126,14 +141,13 @@ server.on("connection", (socket) => {
    * the users password is updated with the received password
    */
   socket.on("updatePass", (email, encryptedPassword) => {
-    var sharedKey;
-    for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
-    }
-    //decrypt the password using the key
-    var password = aes256.decrypt(sharedKey.toString(), encryptedPassword);
-
-    if (backend.updatePassword(password, email, db)) socket.emit("updatePassSuccess");
+    var password = backend.decryptPassword(
+      clients,
+      encryptedPassword,
+      socket.id
+    );
+    if (backend.updatePassword(password, email, db))
+      socket.emit("updatePassSuccess");
     else socket.emit("updatePassFailure");
   });
 
@@ -142,7 +156,8 @@ server.on("connection", (socket) => {
    * the database is updated with the new question
    */
   socket.on("addQuestion", (question, answers, weekNumber) => {
-    if (backend.addQuestion(question, answers, db, weekNumber)) socket.emit("addQuestionSuccess");
+    if (backend.addQuestion(question, answers, db, weekNumber))
+      socket.emit("addQuestionSuccess");
     else socket.emit("addQuestionFailure");
   });
 
@@ -158,20 +173,22 @@ server.on("connection", (socket) => {
   });
 
   /**
-     * @summary When the socket receives a getQuestions signal,
-     * all questions with the given weekNumber are returned and 
-     * emitted to the client socket
-     */
-   socket.on("getQuestions", (weekNumber) => {
+   * @summary When the socket receives a getQuestions signal,
+   * all questions with the given weekNumber are returned and
+   * emitted to the client socket
+   */
+  socket.on("getQuestions", (weekNumber) => {
     var questions = backend.getQuestions(db, weekNumber);
     if (questions) socket.emit("getQuestionsSuccess", questions);
     else socket.emit("getQuestionsFailure");
-  })
+  });
 
   /**
    * @summary resets all questions for a given week number
    */
-  socket.on("resetQuestions", (weekNumber) => {backend.resetQuestions(db, weekNumber)})
+  socket.on("resetQuestions", (weekNumber) => {
+    backend.resetQuestions(db, weekNumber);
+  });
 
   /**
    * @summary When the socket receives a getUser signal,
@@ -184,58 +201,105 @@ server.on("connection", (socket) => {
     else socket.emit("returnUserFailure");
   });
 
+  let g, p;
+
+  //TODO: document this
   socket.on("getUserByEmail", (email) => {
-      var user = backend.getUserByEmail(email, db)
-      if (user) socket.emit("returnUserByEmailSuccess", user);
-      else socket.emit("returnUserByEmailFailure");
-  })
+    var user = backend.getUserByEmail(email, db);
+    if (user) socket.emit("returnUserByEmailSuccess", user);
+    else socket.emit("returnUserByEmailFailure");
+  });
 
-  socket.on('startKeyExchange', () => {
+  socket.on("startKeyExchange", () => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-    var g = bigInt(2579);
-    var p = bigInt(5159);
-    var server_public_key = g.modPow(server_private_key,p);
-    socket.emit('serverPublic', Number(server_public_key), Number(g), Number(p));
-});
+    g = bigInt(backend.randomPrime());
+    p = bigInt(2 * g + 1);
+    var server_public_key = g.modPow(server_private_key, p);
+    socket.emit(
+      "serverPublic",
+      Number(server_public_key),
+      Number(g),
+      Number(p)
+    );
+  });
 
-socket.on('clientPublic',(client_public_key) => {
+  //TODO: document this
+  socket.on("clientPublic", (client_public_key) => {
     var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
-    var g = bigInt(2579);
-    var p = bigInt(5159);
     client_public_key = bigInt(client_public_key);
-    
-    var shared_key = client_public_key.modPow(server_private_key,p);
+    var shared_key = client_public_key.modPow(server_private_key, p);
     console.log("the established key: " + shared_key);
 
     clients.push({
-        id: socket.id,
-        key: shared_key
+      id: socket.id,
+      key: shared_key,
     });
-});
-
+  });
 
   /**
-   * @summary This code is ran every 1000ms and counts down
-   * from 604800 seconds down to 0
+   * @summary when a client connects, we increase the
+   * current player number
    */
-  var counter = 604800;
-  var countDown = setInterval(function () {
-    counter--;
-    if (counter === 0) {
-      counter = 604800;
-      //TODO: Send question to clients
-      //TODO: Reset questions table
-      console.log("counter done");
-      clearInterval(countDown);
+  socket.on("quizConnect", () => {
+    currentlyPlaying.push(socket.id);
+    playerCount++
+  });
+
+  /**
+   * @summary when a client disconnects, we decrease the
+   * current player number
+   */
+  socket.on("quizDisconnect", () => {playerCount--});
+
+  /**
+   * @summary emits the current time left until the
+   * quiz opens every second
+   */
+  interval = setInterval(() => {
+    var date = quizCountdown.nextDate().toDate();
+    var seconds = backend.calculateTimeToDateSeconds(date);
+    socket.emit("timeLeft", backend.stringifySeconds(seconds));
+
+    //Debug
+    console.log(backend.stringifySeconds(seconds));
+  }, 1000);
+
+  /**
+   * @summary determines behaviour when client disconnects
+   */
+  socket.on("disconnect", () => {
+    var user = backend.getUser(socket.id, users);
+    if (user) console.log("client disconnected with username: " + user);
+    else console.log("guest client disconnected");
+
+    /* Should only decrease player count
+    if the player is currently playing */
+    if(currentlyPlaying.includes(socket.id)) {
+      currentlyPlaying.splice(currentlyPlaying.indexOf(socket.id));
+      playerCount--;
     }
-  }, 1000);
-
-
-  /**
-   * @summary emits the current time left to every connected
-   * client every second
-   */
-  setInterval(() => {
-    socket.emit("timeLeft", backend.stringifySeconds(counter));
-  }, 1000);
+    users.splice(users.indexOf(user), 1);
+    clients.splice(clients.indexOf(socket.id), 1);
+    clearInterval(interval);
+  });
 });
+
+/**
+ *
+ * @summary Schedules a job every week according to the
+ * Europe/Stockholm time zone
+ */
+var quizCountdown = new CronJob(
+  //"* 20 * * SUN",
+  "*/10 * * * * *",
+  function () {
+    server.emit("quizReady");
+    quizOpen = true;
+    setInterval(() => {server.emit("updatePlayerCount", playerCount)}, 1000);
+  },
+  null,
+  true,
+  "Europe/Stockholm"
+);
+
+quizCountdown.start();

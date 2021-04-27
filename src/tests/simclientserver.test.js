@@ -5,9 +5,11 @@ const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require("better-sqlite3");
 const nodemailer = require("nodemailer");
+const aes256 = require("aes256");
+const bigInt = require("big-integer");
 
 describe("Test Suite for Server", () => {
-  let io, serverSocket, clientSocket, db, users;
+  let io, serverSocket, clientSocket, db, users, clients;
 
   beforeAll((done) => {
     db = new Database("./tests/db_for_test.db");
@@ -22,6 +24,7 @@ describe("Test Suite for Server", () => {
       clientSocket.on("connect", done);
     });
     users = [];
+    clients = [];
   });
 
   beforeEach((done) => {
@@ -877,15 +880,20 @@ describe("Test Suite for Server", () => {
     clientSocket.emit("checkMail", mail);
   });
 
-  ///Mega hard coded but want that good stuff LCOV any %
-  test("StringifySeconds", (done) => {
-    serverSocket.on("stringifySeconds", (week) => {
-      expect(backend.stringifySeconds(week)).toBe(
-        "days: 0 hours: 15 minutes: 5 seconds: 21"
-      );
+  test("StringifySeconds less than one day", (done) => {
+    serverSocket.on("stringifySecondsLess", (week) => {
+      expect(backend.stringifySeconds(week)).toBe("15:05:21");
       done();
     });
-    clientSocket.emit("stringifySeconds", 54321);
+    clientSocket.emit("stringifySecondsLess", 54321);
+  });
+
+  test("StringifySeconds more than one day", (done) => {
+    serverSocket.on("stringifySecondsMore", (week) => {
+      expect(backend.stringifySeconds(week)).toBe("6 days 9 hours");
+      done();
+    });
+    clientSocket.emit("stringifySecondsMore", 554321);
   });
 
   test("getUser with NULL arguments", (done) => {
@@ -894,5 +902,88 @@ describe("Test Suite for Server", () => {
       done();
     });
     clientSocket.emit("getUserNull");
+  });
+
+  test("decryptPassword with NULL arguments", (done) => {
+    serverSocket.on("decryptPasswordNull", (pass, email) => {
+      expect(backend.decryptPassword()).toBeUndefined();
+      done();
+    });
+    clientSocket.emit("decryptPasswordNull");
+  });
+
+  test("decrypt a password", (done) => {
+    var password = faker.internet.password();
+    serverSocket.on("decryptPassword", (clients, encryptedPassword, id) => {
+      var decryptedPassword = backend.decryptPassword(
+        clients,
+        encryptedPassword,
+        id
+      );
+      expect(decryptedPassword).toBe(password);
+      done();
+    });
+    var encryptedPassword = aes256.encrypt("key", password);
+    clients.push({ id: clientSocket.id, key: "key" });
+    clientSocket.emit(
+      "decryptPassword",
+      clients,
+      encryptedPassword,
+      clientSocket.id
+    );
+  });
+
+  test("Simulate asymmetric key exchange and compare shared keys", (done) => {
+    var serverPrivateKey = bigInt(faker.finance.account(256));
+    var g = bigInt(backend.randomPrime());
+    var p = bigInt(2 * g + 1);
+    var serverPublicKey = g.modPow(serverPrivateKey, p);
+
+    serverSocket.on("clientPublic", (clientPublicKey, expectedSharedKey) => {
+      clientPublicKey = bigInt(clientPublicKey);
+      var sharedKey = clientPublicKey.modPow(serverPrivateKey, p);
+      expect(sharedKey.toString()).toMatch(expectedSharedKey.toString());
+      done();
+    });
+
+    clientSocket.on("serverPublic", (serverPublicKey, g, p) => {
+      serverPublicKey = bigInt(serverPublicKey);
+      g = bigInt(g);
+      p = bigInt(p);
+      var privateKey = bigInt(faker.finance.account(256));
+      var clientPublicKey = g.modPow(privateKey, p);
+      sharedKey = serverPublicKey.modPow(privateKey, p);
+      clientSocket.emit(
+        "clientPublic",
+        Number(clientPublicKey),
+        Number(sharedKey)
+      );
+    });
+    serverSocket.emit(
+      "serverPublic",
+      Number(serverPublicKey),
+      Number(g),
+      Number(p)
+    );
+  });
+
+  test("Generate prime, check that it's prime and between 5000-10000", (done) => {
+    function isPrime(value) {
+      for (var i = 2; i < value; i++) {
+        if (value % i === 0) {
+          return false;
+        }
+      }
+      return value > 1;
+    }
+
+    serverSocket.on("generatePrime", () => {
+      var prime = backend.randomPrime();
+      expect(prime).toBeGreaterThan(5000);
+      expect(prime).toBeLessThan(10000);
+      expect(isPrime(prime)).toBeTruthy();
+      done();
+    });
+    clientSocket.emit("generatePrime");
   });
 });

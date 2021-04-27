@@ -9,18 +9,15 @@
  * @returns {Boolean} true if register was successful, false if not
  */
 function clientRegister(username, password, email, db) {
-  //Checks that the mail consists of (symbols)@(symbols).(symbols) 
+  //Checks that the mail consists of (symbols)@(symbols).(symbols)
   //where symbols are a-z or A-Z or 0-9 (+ some extra symbols)
-  let mailRegex = new RegExp(/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/);
+  let mailRegex = new RegExp(
+    /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/
+  );
   if (!username || !password || !email || !db) return false;
   if (username === "root") return false; //TODO: return something else and emit to user
-  if(!mailRegex.test(email)) return false; 
-  
-  //This should only be necessary while testing as the table SHOULD exist already
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
-  );
-  table.run();
+  if (!mailRegex.test(email)) return false;
+
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? OR email = ?"
   );
@@ -45,7 +42,12 @@ function clientRegister(username, password, email, db) {
  */
 function clientLogin(username, password, db, users, id) {
   if (!username || !password || !db || !users || !id) return "invalid";
-  if (username === "root" && password === "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653") return "root";
+  if (
+    username === "root" &&
+    password ===
+      "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653"
+  )
+    return "root";
   for (user of users) {
     if(user.username === username) {
       return "invalidloggedin"
@@ -69,7 +71,6 @@ function clientLogin(username, password, db, users, id) {
  */
 function clientLogout(id, users) {
   if (!id || !users) return false;
-  
   /* We could use the getUser() function here but we need 
 the index for removing the user from the array */
   for (var i = 0; i < users.length; i++) {
@@ -92,33 +93,33 @@ the index for removing the user from the array */
  * @returns {Boolean} true if input is correct, false if not
  */
 function addQuestion(question, answers, db, weekNumber) {
-  if (!question || !answers || answers.includes(undefined) || !weekNumber || !db)
+  if (
+    !question ||
+    !answers ||
+    answers.includes(undefined) ||
+    !weekNumber ||
+    !db
+  )
     return false;
   if (answers.length !== 4) return false;
-  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
-
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
-  );
-  table.run();
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1)
+    return false;
 
   const checkQuestion = db.prepare(
     "SELECT * FROM questions WHERE question = ?"
   );
   var questionExists = checkQuestion.get(question);
 
-  
-
   if (questionExists) return false;
 
-  
-  const checkAmount = db.prepare("SELECT * FROM questions where weekNumber = ?");
+  const checkAmount = db.prepare(
+    "SELECT * FROM questions where weekNumber = ?"
+  );
   amount = checkAmount.all(weekNumber);
 
   //If getAnswers is undefined, the ? will make sure the whole statement is undefined
   //instead of trying to access length from an undefined value
   if (amount?.length === 10) return false;
-  
 
   const addQuestion = db.prepare(
     "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
@@ -148,10 +149,6 @@ function addQuestion(question, answers, db, weekNumber) {
  */
 function getQuestion(question, db, weekNumber) {
   if (!question || !db) return undefined;
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))"
-  );
-  table.run();
   const getAnswer = db.prepare(
     "SELECT * FROM questions where question = ? AND weekNumber = ?"
   );
@@ -162,7 +159,7 @@ function getQuestion(question, db, weekNumber) {
 
 /**
  * @summary gets all questions with a given weekNumber
- * @param {Database} db database to look up in 
+ * @param {Database} db database to look up in
  * @param {Integer} weekNumber the week number of the quiz
  * @returns {[
  *           { question: String,
@@ -174,32 +171,31 @@ function getQuestion(question, db, weekNumber) {
  *              }
  *           , {...}, {...}, ... ]}
  */
- function getQuestions(db, weekNumber) {
+function getQuestions(db, weekNumber) {
   if (!weekNumber || !db) return undefined;
   if (weekNumber > 52 || weekNumber < 1) return undefined;
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
-  );
-  table.run();
+
   const getAnswer = db.prepare("SELECT * FROM questions where weekNumber = ?");
   getAnswers = getAnswer.all(weekNumber);
 
-  if(getAnswers.length === 0) return undefined;
+  if (getAnswers.length === 0) return undefined;
 
   return getAnswers;
 }
-
 
 /**
  * @summary Resets all questions for a given week number
  * @param {Database} db database to reset in
  * @param {Integer} weekNumber number of the week
- * @returns {Boolean} true if questions could be reset, 
+ * @returns {Boolean} true if questions could be reset,
  * false if not
  */
 function resetQuestions(db, weekNumber) {
-  if(!weekNumber || !db) return false;
-  var deleteQuestions = db.prepare("DELETE FROM questions WHERE weekNumber = ?");
+  if (!weekNumber || !db) return false;
+
+  var deleteQuestions = db.prepare(
+    "DELETE FROM questions WHERE weekNumber = ?"
+  );
   deleteQuestions.run(weekNumber);
   return true;
 }
@@ -350,6 +346,18 @@ function checkMail(email, db) {
 }
 
 /**
+ * @summary calculates number of seconds
+ * between a given date and now
+ * @param {Date} date to compare with
+ * @returns {Number} seconds between now and date
+ */
+function calculateTimeToDateSeconds(date) {
+  var now = new Date();
+  var timeToDate = date.getTime()/1000 - now.getTime()/1000;
+  return timeToDate;
+}
+
+/**
  * @summary Converts seconds to days, hours, minutes and
  * seconds
  * @param {String} counter seconds to convert to string
@@ -362,17 +370,15 @@ function stringifySeconds(counter) {
   // Figure out better solution for calculating this.
   days = Math.floor(counter / day);
   hours = Math.floor((counter % day) / hour);
+  if (days > 1) return days + " days " + hours + " hours";
   minutes = Math.floor(((counter % day) % hour) / minute);
   seconds = Math.floor(((counter % day) % hour) % minute);
   return (
-    "days: " +
-    days +
-    " hours: " +
-    hours +
-    " minutes: " +
-    minutes +
-    " seconds: " +
-    seconds
+    (hours < 10 ? "0" + hours : hours) +
+    ":" +
+    (minutes < 10 ? "0" + minutes : minutes) +
+    ":" +
+    (seconds < 10 ? "0" + seconds : seconds)
   );
 }
 
@@ -394,15 +400,58 @@ function getUser(id, users) {
   return undefined;
 }
 
+/**
+ *
+ * @param {{id: String, sharedKey: Integer}} clients an array of connected
+ * sockets and information about them
+ * @param {String} encryptedPassword password to decrypt
+ * @param {String} id id of socket
+ * @returns {String} decrypted password
+ */
+function decryptPassword(clients, encryptedPassword, id) {
+  if (!clients || !encryptedPassword || !id) return undefined;
+  var aes256 = require("aes256");
+  var sharedKey;
+  for (cli of clients) {
+    if (cli.id == id) sharedKey = cli.key;
+  }
+  if (!sharedKey) return undefined;
+  //decrypt the password using the key
+  var decryptedPassword = aes256.decrypt(
+    sharedKey.toString(),
+    encryptedPassword
+  );
+  return decryptedPassword;
+}
+
+/**
+ * @summary returns a random prime between 5000-10000
+ * @returns {Integer} prime number
+ */
+function randomPrime() {
+  const fs = require("fs");
+  var primeArray = fs
+    .readFileSync("misc/prime-numbers.txt", "utf-8")
+    .split("\n");
+  var random = Math.floor(Math.random() * primeArray.length);
+  return parseInt(primeArray[random]);
+}
+
+/**
+ * @summary Gets user with registered email
+ * @param {String} email email of the user
+ * @param {Database} db database to get user from
+ * @returns {String} the username if found, undefined if not
+ */
 function getUserByEmail(email, db) {
   if (!email) return undefined;
-  const user = db.prepare(
-    `SELECT username FROM users WHERE email = ?`
-  ).get(email).username
+  const user = db
+    .prepare(`SELECT username FROM users WHERE email = ?`)
+    .get(email).username;
   if (user) {
-    return user
+    return user;
   } else {
-    return undefined
+    return undefined;
   }
 }
 
@@ -420,6 +469,9 @@ exports.insertCode = insertCode;
 exports.checkCode = checkCode;
 exports.updatePassword = updatePassword;
 exports.generateCode = generateCode;
+exports.calculateTimeToDateSeconds = calculateTimeToDateSeconds;
 exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
-exports.getUserByEmail = getUserByEmail
+exports.decryptPassword = decryptPassword;
+exports.randomPrime = randomPrime;
+exports.getUserByEmail = getUserByEmail;
