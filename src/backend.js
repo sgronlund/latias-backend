@@ -257,7 +257,7 @@ function checkAnswerNews(question, answer, db) {
   );
   amount = checkAmount.all(weekNumber);
 
-  //If getAnswers is undefined, the ? will make sure the whole statement is undefined
+  //If amount is undefined, the ? will make sure the whole statement is undefined
   //instead of trying to access length from an undefined value
   if (amount?.length === 10) return false;
 
