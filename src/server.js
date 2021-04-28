@@ -67,6 +67,7 @@ server.on("connection", (socket) => {
    */
 
   socket.on("register", (username, encryptedPassword, email) => {
+    console.log(encryptedPassword);
     var password = backend.decryptPassword(
       clients,
       encryptedPassword,
@@ -113,7 +114,7 @@ server.on("connection", (socket) => {
    * otherwise failure message
    */
   socket.on("logout", (id) => {
-    if (backend.clientLogout(id, users) === true) socket.emit("logoutSuccess");
+    if (backend.clientLogout(id, users)) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
 
