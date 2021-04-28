@@ -38,7 +38,7 @@ function clientRegister(username, password, email, db) {
  * @param {Database} db database to check user/password against
  * @param {{ID: String, username: String}} users array of all users
  * @param {String} id socket id
- * @returns {Boolean} true if login was successful, false if not
+ * @returns {String}
  */
 function clientLogin(username, password, db, users, id) {
   if (!username || !password || !db || !users || !id) return "invalid";
@@ -46,22 +46,24 @@ function clientLogin(username, password, db, users, id) {
     username === "root" &&
     password ===
       "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653"
-  )
-    return "root";
+  ) return "root";
   for (user of users) {
     if(user.username === username) {
-      return "invalidloggedin"
+      return "loggedInAlready";
     }
   }
-  users.push({ ID: id, username: username });
-
+  
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? AND password = ?"
   );
   var user = checkUser.get(username, password);
-
-  if (user) return "valid";
-  else return "invalid";
+  
+  if (user) {
+    users.push({ ID: id, username: username });
+    return "validUserDetails";
+  } else {
+    return "invalidUserDetails";
+  }
 }
 
 /**
@@ -523,17 +525,15 @@ function getUser(id, users) {
  */
 function decryptPassword(clients, encryptedPassword, id) {
   if (!clients || !encryptedPassword || !id) return undefined;
-  var aes256 = require("aes256");
+  var CryptoJS = require("crypto-js")
   var sharedKey;
   for (cli of clients) {
     if (cli.id == id) sharedKey = cli.key;
   }
   if (!sharedKey) return undefined;
   //decrypt the password using the key
-  var decryptedPassword = aes256.decrypt(
-    sharedKey.toString(),
-    encryptedPassword
-  );
+  var decryptedPassword = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString()).toString(CryptoJS.enc.Utf8);
+  
   return decryptedPassword;
 }
 
