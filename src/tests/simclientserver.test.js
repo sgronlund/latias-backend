@@ -118,7 +118,9 @@ describe("Test Suite for Server", () => {
     serverSocket.on("validUser", (user, pass, email, id, users) => {
       const register = backend.clientRegister(user, pass, email, db);
       expect(register).toBeTruthy();
-      expect(backend.clientLogin(user, pass, db, users, id)).toBe("validUserDetails");
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
       done();
     });
     clientSocket.emit(
@@ -168,7 +170,9 @@ describe("Test Suite for Server", () => {
     serverSocket.on("register6", (user, pass, email, id) => {
       const register = backend.clientRegister(user, pass, email, db);
       expect(register).toBeTruthy();
-      expect(backend.clientLogin(user, pass, db, users, id)).toBe("validUserDetails");
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
     });
     serverSocket.on("logout", (id, user) => {
       const logout = backend.clientLogout(id, users);
@@ -909,7 +913,9 @@ describe("Test Suite for Server", () => {
   test("Register user, login and fetch the username", (done) => {
     serverSocket.on("register", (user, pass, email, id) => {
       expect(backend.clientRegister(user, pass, email, db)).toBeTruthy();
-      expect(backend.clientLogin(user, pass, db, users, id)).toBe("validUserDetails");
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
     });
     serverSocket.on("fetchUser", (id, user) => {
       var testUser = backend.getUser(id, users);
