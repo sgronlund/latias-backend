@@ -38,7 +38,7 @@ function clientRegister(username, password, email, db) {
  * @param {Database} db database to check user/password against
  * @param {{ID: String, username: String}} users array of all users
  * @param {String} id socket id
- * @returns {Boolean} true if login was successful, false if not
+ * @returns {String}
  */
 function clientLogin(username, password, db, users, id) {
   if (!username || !password || !db || !users || !id) return "invalid";
@@ -49,10 +49,9 @@ function clientLogin(username, password, db, users, id) {
   ) return "root";
   for (user of users) {
     if(user.username === username) {
-      return "loggedInAlready"
+      return "loggedInAlready";
     }
   }
-  
   
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? AND password = ?"
