@@ -46,22 +46,25 @@ function clientLogin(username, password, db, users, id) {
     username === "root" &&
     password ===
       "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653"
-  )
-    return "root";
+  ) return "root";
   for (user of users) {
     if(user.username === username) {
-      return "invalidloggedin"
+      return "loggedInAlready"
     }
   }
-  users.push({ ID: id, username: username });
-
+  
+  
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? AND password = ?"
   );
   var user = checkUser.get(username, password);
-
-  if (user) return "valid";
-  else return "invalid";
+  
+  if (user) {
+    users.push({ ID: id, username: username });
+    return "validUserDetails";
+  } else {
+    return "invalidUserDetails";
+  }
 }
 
 /**

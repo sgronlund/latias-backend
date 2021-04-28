@@ -64,6 +64,7 @@ server.on("connection", (socket) => {
    */
 
   socket.on("register", (username, encryptedPassword, email) => {
+    console.log(encryptedPassword);
     var password = backend.decryptPassword(
       clients,
       encryptedPassword,
@@ -82,21 +83,31 @@ server.on("connection", (socket) => {
    */
   socket.on("login", (username, encryptedPassword, id) => {
     //fetch the key that was used to encrypt the password
+    //console.log(encryptedPassword);
     var sharedKey;
     for(cli of clients) {
-        if(cli.id == socket.id) sharedKey = cli.key;
+      
+        if(cli.id == socket.id) sharedKey = cli.key
     }
+    
     //decrypt the password using the key
     
-    var password = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString()).toString(CryptoJS.enc.Utf8);
-    
-    if (backend.clientLogin(username, password, db, users, id) === "valid") {
+    var password = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString())
+    password = password.toString(CryptoJS.enc.Utf8);
+    const check = backend.clientLogin(username, password, db, users, id)
+    if ( check === "validUserDetails") {
+      console.log("ska emitta success just")
       socket.emit("loginSuccess");
-    } else if (backend.clientLogin(username, password, db, users, id) === "root") {
+    } else if (check === "root") {
+      console.log("ska emitta root just")
       socket.emit("loginRoot");
-    } else if (backend.clientLogin(username, password, db, users, id) === "invalidloggedin") {
+    } else if (check === "loggedInAlready") {
+      console.log("ska emitta already just")
       socket.emit("alreadyLoggedIn");
-    } else {socket.emit("loginFailure")};
+    } else if (check === "invalidUserDetails") {
+      console.log("ska emitta failure just")
+      socket.emit("loginFailure")
+    };
   });
 
   /**
@@ -106,7 +117,7 @@ server.on("connection", (socket) => {
    * otherwise failure message
    */
   socket.on("logout", (id) => {
-    if (backend.clientLogout(id, users) === true) socket.emit("logoutSuccess");
+    if (backend.clientLogout(id, users)) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
 
