@@ -16,7 +16,7 @@ var playerCount = 0;
 let interval;
 
 var backend = require("./backend");
-var app = require("express")("192.168.0.104");
+var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
 var CryptoJS = require("crypto-js")
@@ -67,13 +67,11 @@ server.on("connection", (socket) => {
    */
 
   socket.on("register", (username, encryptedPassword, email) => {
-    console.log(encryptedPassword);
     var password = backend.decryptPassword(
       clients,
       encryptedPassword,
       socket.id
     );
-    console.log(username + " borde ha " + password + " som lösen i databasen");
     if (backend.clientRegister(username, password, email, db))
       socket.emit("registerSuccess");
     else socket.emit("registerFailure");
@@ -312,9 +310,6 @@ server.on("connection", (socket) => {
     var date = quizCountdown.nextDate().toDate();
     var seconds = backend.calculateTimeToDateSeconds(date);
     socket.emit("timeLeft", backend.stringifySeconds(seconds));
-
-    //Debug
-    //console.log(backend.stringifySeconds(seconds));
   }, 1000);
 
   /**
