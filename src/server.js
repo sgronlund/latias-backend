@@ -16,7 +16,7 @@ var playerCount = 0;
 let interval;
 
 var backend = require("./backend");
-var app = require("express")("192.168.0.104");
+var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
 var CryptoJS = require("crypto-js")
@@ -64,13 +64,11 @@ server.on("connection", (socket) => {
    */
 
   socket.on("register", (username, encryptedPassword, email) => {
-    console.log(encryptedPassword);
     var password = backend.decryptPassword(
       clients,
       encryptedPassword,
       socket.id
     );
-    console.log(username + " borde ha " + password + " som lösen i databasen");
     if (backend.clientRegister(username, password, email, db))
       socket.emit("registerSuccess");
     else socket.emit("registerFailure");
@@ -83,29 +81,22 @@ server.on("connection", (socket) => {
    */
   socket.on("login", (username, encryptedPassword, id) => {
     //fetch the key that was used to encrypt the password
-    //console.log(encryptedPassword);
     var sharedKey;
     for(cli of clients) {
-      
         if(cli.id == socket.id) sharedKey = cli.key
     }
     
     //decrypt the password using the key
-    
     var password = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString())
     password = password.toString(CryptoJS.enc.Utf8);
     const check = backend.clientLogin(username, password, db, users, id)
     if ( check === "validUserDetails") {
-      console.log("ska emitta success just")
       socket.emit("loginSuccess");
     } else if (check === "root") {
-      console.log("ska emitta root just")
       socket.emit("loginRoot");
     } else if (check === "loggedInAlready") {
-      console.log("ska emitta already just")
       socket.emit("alreadyLoggedIn");
     } else if (check === "invalidUserDetails") {
-      console.log("ska emitta failure just")
       socket.emit("loginFailure")
     };
   });
@@ -271,9 +262,6 @@ server.on("connection", (socket) => {
     var date = quizCountdown.nextDate().toDate();
     var seconds = backend.calculateTimeToDateSeconds(date);
     socket.emit("timeLeft", backend.stringifySeconds(seconds));
-
-    //Debug
-    //console.log(backend.stringifySeconds(seconds));
   }, 1000);
 
   /**
