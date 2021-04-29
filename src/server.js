@@ -19,21 +19,10 @@ var backend = require("./backend");
 var app = require("express")("192.168.1.150");
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
-var CryptoJS = require("crypto-js");
 var CronJob = require("cron").CronJob;
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
-
-/////////////////
-// LEADERBOARD //
-/////////////////
-var leaderboard = backend.getTopPlayers(db);
-updateLeaderboard = () => {
-  leaderboard = backend.getTopPlayers(db);
-}
-setInterval(updateLeaderboard, 60*1000); //varje minut uppdateras leaderboard
-//////////////////
 
 db.prepare(
   "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
@@ -44,6 +33,12 @@ db.prepare(
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
+
+var leaderboard = backend.getTopPlayers(db);
+updateLeaderboard = () => {
+  leaderboard = backend.getTopPlayers(db);
+}
+setInterval(updateLeaderboard, 60*1000);
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
