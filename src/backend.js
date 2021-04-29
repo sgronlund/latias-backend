@@ -590,7 +590,6 @@ function getUserByEmail(email, db) {
     "SELECT score from users where username = ?"
   )
   var score = checkScore.get(username);
-  console.log(score.score);
   if(!score) return 0;
   return parseInt(score.score);
 }
