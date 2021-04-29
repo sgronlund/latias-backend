@@ -14,9 +14,9 @@ This process should not differ from MacOS, Linux or Windows assuming you've succ
 ## Client-Server session
 
 ### Server
-When initiating the Client-Server session you must first start the server. To do this enter the `server`-directory which exists in the `src`-directory and run the command:
+When initiating the Client-Server session you must first start the server. To do this enter the `src`-directory and run the command:
 ```bash
-node server.js
+npm start
 ```
 
 If everything is working your terminal should look something like this:

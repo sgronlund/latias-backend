@@ -9,18 +9,15 @@
  * @returns {Boolean} true if register was successful, false if not
  */
 function clientRegister(username, password, email, db) {
-  //Checks that the mail consists of (symbols)@(symbols).(symbols) 
+  //Checks that the mail consists of (symbols)@(symbols).(symbols)
   //where symbols are a-z or A-Z or 0-9 (+ some extra symbols)
-  let mailRegex = new RegExp(/^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/);
+  let mailRegex = new RegExp(
+    /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/
+  );
   if (!username || !password || !email || !db) return false;
   if (username === "root") return false; //TODO: return something else and emit to user
-  if(!mailRegex.test(email)) return false; 
-  
-  //This should only be necessary while testing as the table SHOULD exist already
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
-  );
-  table.run();
+  if (!mailRegex.test(email)) return false;
+
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? OR email = ?"
   );
@@ -41,21 +38,32 @@ function clientRegister(username, password, email, db) {
  * @param {Database} db database to check user/password against
  * @param {{ID: String, username: String}} users array of all users
  * @param {String} id socket id
- * @returns {Boolean} true if login was successful, false if not
+ * @returns {String}
  */
 function clientLogin(username, password, db, users, id) {
   if (!username || !password || !db || !users || !id) return "invalid";
-  if (username === "root" && password === "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653") return "root";
-
-  users.push({ ID: id, username: username });
-
+  if (
+    username === "root" &&
+    password ===
+      "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653"
+  ) return "root";
+  for (user of users) {
+    if(user.username === username) {
+      return "loggedInAlready";
+    }
+  }
+  
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? AND password = ?"
   );
   var user = checkUser.get(username, password);
-
-  if (user) return "valid";
-  else return "invalid";
+  
+  if (user) {
+    users.push({ ID: id, username: username });
+    return "validUserDetails";
+  } else {
+    return "invalidUserDetails";
+  }
 }
 
 /**
@@ -86,44 +94,43 @@ the index for removing the user from the array */
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
-function addQuestion(question, answers, db, weekNumber) {
-  if (!question || !answers || answers.includes(undefined) || !weekNumber || !db)
+function addQuestionNews(question, answers, db, weekNumber) {
+  if (
+    !question ||
+    !answers ||
+    answers.includes(undefined) ||
+    !weekNumber ||
+    !db
+  )
     return false;
-  if (answers.length !== 4) return false;
-  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
-
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
-  );
-  table.run();
+  if (answers.length !== 3) return false;
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1)
+    return false;
 
   const checkQuestion = db.prepare(
     "SELECT * FROM questions WHERE question = ?"
   );
   var questionExists = checkQuestion.get(question);
 
-  
-
   if (questionExists) return false;
 
-  
-  const checkAmount = db.prepare("SELECT * FROM questions where weekNumber = ?");
+  const checkAmount = db.prepare(
+    "SELECT * FROM questions where weekNumber = ?"
+  );
   amount = checkAmount.all(weekNumber);
 
   //If amount is undefined, the ? will make sure the whole statement is undefined
   //instead of trying to access length from an undefined value
   if (amount?.length === 10) return false;
-  
 
   const addQuestion = db.prepare(
-    "INSERT INTO questions (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
+    "INSERT INTO questions (question, wrong1, wrong2, correct, weekNumber) VALUES (?, ?, ?, ?, ?)"
   );
   addQuestion.run(
     question,
     answers[0],
     answers[1],
     answers[2],
-    answers[3],
     weekNumber
   );
 
@@ -141,12 +148,8 @@ function addQuestion(question, answers, db, weekNumber) {
  *              wrong3: String,
  *              correct: String }}
  */
-function getQuestion(question, db, weekNumber) {
+function getQuestionNews(question, db, weekNumber) {
   if (!question || !db) return undefined;
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255))"
-  );
-  table.run();
   const getAnswer = db.prepare(
     "SELECT * FROM questions where question = ? AND weekNumber = ?"
   );
@@ -157,48 +160,42 @@ function getQuestion(question, db, weekNumber) {
 
 /**
  * @summary gets all questions with a given weekNumber
- * @param {Database} db database to look up in 
+ * @param {Database} db database to look up in
  * @param {Integer} weekNumber the week number of the quiz
  * @returns {[
  *           { question: String,
  *              wrong1: String,
  *              wrong2: String,
- *              wrong3: String,
  *              correct: String,
  *              weekNumber: Integer
  *              }
  *           , {...}, {...}, ... ]}
  */
- function getQuestions(db, weekNumber) {
+function getQuestionsNews(db, weekNumber) {
   if (!weekNumber || !db) return undefined;
   if (weekNumber > 52 || weekNumber < 1) return undefined;
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
-  );
-  table.run();
+
   const getAnswer = db.prepare("SELECT * FROM questions where weekNumber = ?");
   getAnswers = getAnswer.all(weekNumber);
 
-  if(getAnswers.length === 0) return undefined;
+  if (getAnswers.length === 0) return undefined;
 
   return getAnswers;
 }
-
 
 /**
  * @summary Resets all questions for a given week number
  * @param {Database} db database to reset in
  * @param {Integer} weekNumber number of the week
- * @returns {Boolean} true if questions could be reset, 
+ * @returns {Boolean} true if questions could be reset,
  * false if not
  */
-function resetQuestions(db, weekNumber) {
-  if(!weekNumber || !db) return false;
-  const table = db.prepare(
-    "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
+function resetQuestionsNews(db, weekNumber) {
+  if (!weekNumber || !db) return false;
+
+  var deleteQuestions = db.prepare(
+    "DELETE FROM questions WHERE weekNumber = ?"
   );
-  table.run();
-  var deleteQuestions = db.prepare("DELETE FROM questions WHERE weekNumber = ?");
   deleteQuestions.run(weekNumber);
   return true;
 }
@@ -211,11 +208,126 @@ function resetQuestions(db, weekNumber) {
  * @param {Database} db database to check in
  * @returns {Boolean} true if answer is correct, false if not
  */
-function checkAnswer(question, answer, db) {
+function checkAnswerNews(question, answer, db) {
   if (!question || !answer || !db) return false;
 
   const checkAnswer = db.prepare(
     "SELECT * FROM questions where question = ? AND correct = ?"
+  );
+  var correct = checkAnswer.get(question, answer);
+  if (correct) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * @summary Adds a new question along with it's answers to
+ * the database.
+ * @param {String} question The question to add
+ * @param {[String, String, String, String]} answers An array
+ * of strings representing each answer
+ * @param {Integer} weekNumber id of the quiz
+ * @param {Database} db database to add question to
+ * @returns {Boolean} true if input is correct, false if not
+ */
+ function addQuestionArticle(question, answers, db, weekNumber) {
+  if (
+    !question ||
+    !answers ||
+    answers.includes(undefined) ||
+    !weekNumber ||
+    !db
+  )
+    return false;
+  if (answers.length !== 4) return false;
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
+  const checkQuestion = db.prepare(
+    "SELECT * FROM questionsArticle WHERE question = ?"
+  );
+  var questionExists = checkQuestion.get(question);
+
+  if (questionExists) return false;
+  const checkAmount = db.prepare(
+    "SELECT * FROM questionsArticle where weekNumber = ?"
+  );
+  amount = checkAmount.all(weekNumber);
+
+  //If amount is undefined, the ? will make sure the whole statement is undefined
+  //instead of trying to access length from an undefined value
+  if (amount?.length === 10) return false;
+
+  const addQuestion = db.prepare(
+    "INSERT INTO questionsArticle (question, wrong1, wrong2, wrong3, correct, weekNumber) VALUES (?, ?, ?, ?, ?, ?)"
+  );
+  addQuestion.run(
+    question,
+    answers[0],
+    answers[1],
+    answers[2],
+    answers[3],
+    weekNumber
+  );
+
+  return true;
+}
+
+/**
+ * @summary gets all questions with a given weekNumber
+ * @param {Database} db database to look up in
+ * @param {Integer} weekNumber the week number of the quiz
+ * @returns {[
+ *           { question: String,
+ *              wrong1: String,
+ *              wrong2: String,
+ *              correct: String,
+ *              weekNumber: Integer
+ *              }
+ *           , {...}, {...}, ... ]}
+ */
+ function getQuestionsArticle(db, weekNumber) {
+  if (!weekNumber || !db) return undefined;
+  if (weekNumber > 52 || weekNumber < 1) return undefined;
+
+  const getAnswer = db.prepare("SELECT * FROM questionsArticle where weekNumber = ?");
+  getAnswers = getAnswer.all(weekNumber);
+
+  if (getAnswers?.length === 0) return undefined;
+
+  return getAnswers;
+}
+
+/**
+ * @summary Resets all questions for a given week number
+ * @param {Database} db database to reset in
+ * @param {Integer} weekNumber number of the week
+ * @returns {Boolean} true if questions could be reset,
+ * false if not
+ */
+function resetQuestionsArticle(db, weekNumber) {
+  if (!weekNumber || !db) return false;
+
+  var deleteQuestions = db.prepare(
+    "DELETE FROM questionsArticle WHERE weekNumber = ?"
+  );
+  deleteQuestions.run(weekNumber);
+  return true;
+}
+
+/**
+ * @summary Checks in the database if the question is in the
+ * database and if the answer matches the correct one
+ * @param {String} question The question to check
+ * @param {String} answer The answer to check
+ * @param {Database} db database to check in
+ * @returns {Boolean} true if answer is correct, false if not
+ */
+function checkAnswerArticle(question, answer, db) {
+  if (!question || !answer || !db) return false;
+
+  const checkAnswer = db.prepare(
+    "SELECT * FROM questionsArticle where question = ? AND correct = ?"
   );
   var correct = checkAnswer.get(question, answer);
   if (correct) {
@@ -349,6 +461,18 @@ function checkMail(email, db) {
 }
 
 /**
+ * @summary calculates number of seconds
+ * between a given date and now
+ * @param {Date} date to compare with
+ * @returns {Number} seconds between now and date
+ */
+function calculateTimeToDateSeconds(date) {
+  var now = new Date();
+  var timeToDate = date.getTime()/1000 - now.getTime()/1000;
+  return timeToDate;
+}
+
+/**
  * @summary Converts seconds to days, hours, minutes and
  * seconds
  * @param {String} counter seconds to convert to string
@@ -361,7 +485,7 @@ function stringifySeconds(counter) {
   // Figure out better solution for calculating this.
   days = Math.floor(counter / day);
   hours = Math.floor((counter % day) / hour);
-  if(days>1) return days + " days " + hours + " hours";
+  if (days > 1) return days + " days " + hours + " hours";
   minutes = Math.floor(((counter % day) % hour) / minute);
   seconds = Math.floor(((counter % day) % hour) % minute);
   return (
@@ -406,20 +530,21 @@ function getUser(id, users) {
  * 
  * @param {{id: String, sharedKey: Integer}} clients an array of connected
  * sockets and information about them
- * @param {String} encryptedPassword password to decrypt 
- * @param {String} id id of socket 
+ * @param {String} encryptedPassword password to decrypt
+ * @param {String} id id of socket
  * @returns {String} decrypted password
  */
 function decryptPassword(clients, encryptedPassword, id) {
-  if(!clients || !encryptedPassword || !id) return undefined;
-  var aes256 = require("aes256");
+  if (!clients || !encryptedPassword || !id) return undefined;
+  var CryptoJS = require("crypto-js")
   var sharedKey;
-  for(cli of clients) {
-      if(cli.id == id) sharedKey = cli.key;
+  for (cli of clients) {
+    if (cli.id == id) sharedKey = cli.key;
   }
-  if(!sharedKey) return undefined;
+  if (!sharedKey) return undefined;
   //decrypt the password using the key
-  var decryptedPassword = aes256.decrypt(sharedKey.toString(), encryptedPassword);
+  var decryptedPassword = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString()).toString(CryptoJS.enc.Utf8);
+  
   return decryptedPassword;
 }
 
@@ -428,8 +553,10 @@ function decryptPassword(clients, encryptedPassword, id) {
  * @returns {Integer} prime number
  */
 function randomPrime() {
-  const fs = require('fs')
-  var primeArray = fs.readFileSync("misc/prime-numbers.txt", "utf-8").split("\n");
+  const fs = require("fs");
+  var primeArray = fs
+    .readFileSync("misc/prime-numbers.txt", "utf-8")
+    .split("\n");
   var random = Math.floor(Math.random() * primeArray.length);
   return parseInt(primeArray[random]);
 }
@@ -442,13 +569,13 @@ function randomPrime() {
  */
 function getUserByEmail(email, db) {
   if (!email) return undefined;
-  const user = db.prepare(
-    `SELECT username FROM users WHERE email = ?`
-  ).get(email).username
+  const user = db
+    .prepare(`SELECT username FROM users WHERE email = ?`)
+    .get(email).username;
   if (user) {
-    return user
+    return user;
   } else {
-    return undefined
+    return undefined;
   }
 }
 
@@ -482,17 +609,22 @@ function updateScore(username, newScore, db) {
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
-exports.addQuestion = addQuestion;
-exports.getQuestion = getQuestion;
-exports.getQuestions = getQuestions;
-exports.resetQuestions = resetQuestions;
-exports.checkAnswer = checkAnswer;
+exports.addQuestionNews = addQuestionNews;
+exports.getQuestionNews = getQuestionNews;
+exports.getQuestionsNews = getQuestionsNews;
+exports.resetQuestionsNews = resetQuestionsNews;
+exports.checkAnswerNews = checkAnswerNews;
+exports.addQuestionArticle = addQuestionArticle;
+exports.getQuestionsArticle = getQuestionsArticle;
+exports.resetQuestionsArticle = resetQuestionsArticle;
+exports.checkAnswerArticle = checkAnswerArticle;
 exports.sendMail = sendMail;
 exports.checkMail = checkMail;
 exports.insertCode = insertCode;
 exports.checkCode = checkCode;
 exports.updatePassword = updatePassword;
 exports.generateCode = generateCode;
+exports.calculateTimeToDateSeconds = calculateTimeToDateSeconds;
 exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
 exports.decryptPassword = decryptPassword;
