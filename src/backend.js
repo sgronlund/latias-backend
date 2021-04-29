@@ -595,7 +595,7 @@ function getUserByEmail(email, db) {
   return parseInt(score.score);
 }
 /**
- * Updates the score of a user in the database
+ * @summary Updates the score of a user in the database
  * @param {String} username the user we want to get score from
  * @param {Number} newScore the updated score
  * @param {database} db the database
