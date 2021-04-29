@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
 
   beforeEach((done) => {
     const tableUsers = db.prepare(
-      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
+      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
     );
     const tableQuestions = db.prepare(
       "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
