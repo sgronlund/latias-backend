@@ -285,7 +285,6 @@ server.on("connection", (socket) => {
   });
 
   /**
-   * @function
    * @summary will send the current version of the leaderboard to a requesting client
    */
    socket.on('getLeaderboard', () => {
