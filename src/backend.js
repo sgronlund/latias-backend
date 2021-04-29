@@ -580,7 +580,7 @@ function getUserByEmail(email, db) {
 }
 
 /**
- * Fetches the score from a user from the database
+ * @summary Fetches the score from a user from the database
  * @param {String} username the user we want to get score from
  * @param {Database} db the database
  * @returns {Number} the score of the user
