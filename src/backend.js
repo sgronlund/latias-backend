@@ -591,6 +591,7 @@ function getUserByEmail(email, db) {
   )
   var score = checkScore.get(username);
   console.log(score.score);
+  if(!score) return 0;
   return parseInt(score.score);
 }
 /**
