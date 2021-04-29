@@ -2,7 +2,7 @@ docs
 *.db
 src/*.db
 src/tests/*.db
-src/server/.db-journal
+src/tests/*.db-journal
 node_modules/**/*
 package-lock.json
 src/node_modules/**/*
