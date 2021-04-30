@@ -19,7 +19,7 @@ function clientRegister(username, password, email, db) {
   if (!mailRegex.test(email)) return false;
 
   const checkUser = db.prepare(
-    "SELECT * FROM users WHERE username = ? OR email = ?"
+    "SELECT * FROM users WHERE username = ? COLLATE NOCASE OR email = ?"
   );
   var user = checkUser.get(username, email);
 
@@ -54,7 +54,7 @@ function clientLogin(username, password, db, users, id) {
   }
   
   const checkUser = db.prepare(
-    "SELECT * FROM users WHERE username = ? AND password = ?"
+    "SELECT * FROM users WHERE username = ? COLLATE NOCASE AND password = ?"
   );
   var user = checkUser.get(username, password);
   

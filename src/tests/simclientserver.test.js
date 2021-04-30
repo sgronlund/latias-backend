@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
 
   beforeEach((done) => {
     const tableUsers = db.prepare(
-      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
+      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
     );
     const tableQuestionsNews = db.prepare(
       "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -126,6 +126,25 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "validUser",
       faker.internet.userName(),
+      faker.internet.password(),
+      faker.internet.exampleEmail(),
+      clientSocket.id,
+      users
+    );
+  });
+
+  test("Register user and log in with case insensetive username", (done) => {
+    serverSocket.on("validUsernameCase", (user, pass, email, id, users) => {
+      const register = backend.clientRegister(user, pass, email, db);
+      expect(register).toBeTruthy();
+      expect(backend.clientLogin("uSeRnAmE", pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
+      done();
+    });
+    clientSocket.emit(
+      "validUsernameCase",
+      "username",
       faker.internet.password(),
       faker.internet.exampleEmail(),
       clientSocket.id,
