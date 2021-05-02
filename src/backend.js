@@ -19,14 +19,14 @@ function clientRegister(username, password, email, db) {
   if (!mailRegex.test(email)) return false;
 
   const checkUser = db.prepare(
-    "SELECT * FROM users WHERE username = ? OR email = ?"
+    "SELECT * FROM users WHERE username = ? COLLATE NOCASE OR email = ?"
   );
   var user = checkUser.get(username, email);
 
   if (user) return false; //If username or email is busy, return false
 
   const addUser = db.prepare(
-    "INSERT INTO users (username, password, email, balance) VALUES (?, ?, ?, ?)"
+    "INSERT INTO users (username, password, email, score, balance) VALUES (?, ?, ?, ?)"
   ); //resetcode not generated yet
   addUser.run(username, password, email, 0);
 
@@ -38,7 +38,7 @@ function clientRegister(username, password, email, db) {
  * @param {Database} db database to check user/password against
  * @param {{ID: String, username: String}} users array of all users
  * @param {String} id socket id
- * @returns {Boolean} true if login was successful, false if not
+ * @returns {String}
  */
 function clientLogin(username, password, db, users, id) {
   if (!username || !password || !db || !users || !id) return "invalid";
@@ -50,19 +50,21 @@ function clientLogin(username, password, db, users, id) {
     return "root";
   for (user of users) {
     if (user.username === username) {
-      return "invalidloggedin";
+      return "loggedInAlready";
     }
   }
 
   const checkUser = db.prepare(
-    "SELECT * FROM users WHERE username = ? AND password = ?"
+    "SELECT * FROM users WHERE username = ? COLLATE NOCASE AND password = ?"
   );
   var user = checkUser.get(username, password);
 
   if (user) {
     users.push({ ID: id, username: username, balance: user.balance });
-    return "valid";
-  } else return "invalid";
+    return "validUserDetails";
+  } else {
+    return "invalidUserDetails";
+  }
 }
 
 /**
@@ -118,7 +120,7 @@ function addQuestionNews(question, answers, db, weekNumber) {
   );
   amount = checkAmount.all(weekNumber);
 
-  //If getAnswers is undefined, the ? will make sure the whole statement is undefined
+  //If amount is undefined, the ? will make sure the whole statement is undefined
   //instead of trying to access length from an undefined value
   if (amount?.length === 10) return false;
 
@@ -522,24 +524,37 @@ function getBalance(id, users) {
   return undefined;
 }
 
-
 function changeBalance(id, users, price, db) {
   if (!id || !users) return undefined;
 
   const user = users.find((user) => user.ID === id);
   if (user) {
-    if (user.balance - price < 0){
+    if (user.balance - price < 0) {
       return undefined;
     }
-    const newbalance = user.balance = user.balance - price;   //ändrar i listan
+    const newbalance = (user.balance = user.balance - price); //ändrar i listan
     const name = user.username;
-    const dbBalance = db.prepare(`UPDATE users SET balance = ? WHERE username = ?`);  //ändra i db
+    const dbBalance = db.prepare(
+      `UPDATE users SET balance = ? WHERE username = ?`
+    ); //ändra i db
     dbBalance.run(newbalance, name);
     return user.balance;
   }
   return undefined;
 }
 
+/**
+ * @function
+ * @summary gets the top 5 players from the database
+ * @param {Database} db the database
+ * @returns {Array} an array of 5 users and their score
+ */
+function getTopPlayers(db) {
+  const users = db
+    .prepare(`SELECT username, score FROM users ORDER BY score DESC LIMIT 5`)
+    .all();
+  return users;
+}
 
 /**
  *
@@ -551,17 +566,18 @@ function changeBalance(id, users, price, db) {
  */
 function decryptPassword(clients, encryptedPassword, id) {
   if (!clients || !encryptedPassword || !id) return undefined;
-  var aes256 = require("aes256");
+  var CryptoJS = require("crypto-js");
   var sharedKey;
   for (cli of clients) {
     if (cli.id == id) sharedKey = cli.key;
   }
   if (!sharedKey) return undefined;
   //decrypt the password using the key
-  var decryptedPassword = aes256.decrypt(
-    sharedKey.toString(),
-    encryptedPassword
-  );
+  var decryptedPassword = CryptoJS.AES.decrypt(
+    encryptedPassword,
+    sharedKey.toString()
+  ).toString(CryptoJS.enc.Utf8);
+
   return decryptedPassword;
 }
 
@@ -596,6 +612,31 @@ function getUserByEmail(email, db) {
   }
 }
 
+/**
+ * @summary Fetches the score from a user from the database
+ * @param {String} username the user we want to get score from
+ * @param {Database} db the database
+ * @returns {Number} the score of the user
+ */
+function getScore(username, db) {
+  const checkScore = db.prepare("SELECT score from users where username = ?");
+  var score = checkScore.get(username);
+  if (!score) return 0;
+  return parseInt(score.score);
+}
+/**
+ * @summary Updates the score of a user in the database
+ * @param {String} username the user we want to get score from
+ * @param {Number} newScore the updated score
+ * @param {database} db the database
+ */
+function updateScore(username, newScore, db) {
+  const updateScore = db.prepare(
+    "UPDATE users SET score = ? WHERE username = ?"
+  );
+  updateScore.run(newScore, username);
+}
+
 exports.clientLogin = clientLogin;
 exports.clientRegister = clientRegister;
 exports.clientLogout = clientLogout;
@@ -622,3 +663,6 @@ exports.changeBalance = changeBalance;
 exports.decryptPassword = decryptPassword;
 exports.randomPrime = randomPrime;
 exports.getUserByEmail = getUserByEmail;
+exports.updateScore = updateScore;
+exports.getScore = getScore;
+exports.getTopPlayers = getTopPlayers;

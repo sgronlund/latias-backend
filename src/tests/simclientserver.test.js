@@ -5,7 +5,7 @@ const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require("better-sqlite3");
 const nodemailer = require("nodemailer");
-const aes256 = require("aes256");
+var CryptoJS = require("crypto-js");
 const bigInt = require("big-integer");
 
 describe("Test Suite for Server", () => {
@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
 
   beforeEach((done) => {
     const tableUsers = db.prepare(
-      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255))"
+      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
     );
     const tableQuestionsNews = db.prepare(
       "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -68,7 +68,7 @@ describe("Test Suite for Server", () => {
   test("Login in with faulty user fails", (done) => {
     serverSocket.on("faultyUser", (user, pass, id, users) => {
       const bool2 = backend.clientLogin(user, pass, db, users, id);
-      expect(bool2).toBe("invalid");
+      expect(bool2).toBe("invalidUserDetails");
       done();
     });
     var usr = faker.internet.userName();
@@ -82,7 +82,7 @@ describe("Test Suite for Server", () => {
       expect(register).toBeTruthy();
       expect(
         backend.clientLogin(user, "wrongpasswordihope", db, users, id)
-      ).toBe("invalid");
+      ).toBe("invalidUserDetails");
       done();
     });
     clientSocket.emit(
@@ -101,7 +101,7 @@ describe("Test Suite for Server", () => {
       expect(register).toBeTruthy();
       expect(
         backend.clientLogin("wrongusernameihope", pass, db, users, id)
-      ).toBe("invalid");
+      ).toBe("invalidUserDetails");
       done();
     });
     clientSocket.emit(
@@ -118,12 +118,33 @@ describe("Test Suite for Server", () => {
     serverSocket.on("validUser", (user, pass, email, id, users) => {
       const register = backend.clientRegister(user, pass, email, db);
       expect(register).toBeTruthy();
-      expect(backend.clientLogin(user, pass, db, users, id)).toBe("valid");
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
       done();
     });
     clientSocket.emit(
       "validUser",
       faker.internet.userName(),
+      faker.internet.password(),
+      faker.internet.exampleEmail(),
+      clientSocket.id,
+      users
+    );
+  });
+
+  test("Register user and log in with case insensetive username", (done) => {
+    serverSocket.on("validUsernameCase", (user, pass, email, id, users) => {
+      const register = backend.clientRegister(user, pass, email, db);
+      expect(register).toBeTruthy();
+      expect(backend.clientLogin("uSeRnAmE", pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
+      done();
+    });
+    clientSocket.emit(
+      "validUsernameCase",
+      "username",
       faker.internet.password(),
       faker.internet.exampleEmail(),
       clientSocket.id,
@@ -168,7 +189,9 @@ describe("Test Suite for Server", () => {
     serverSocket.on("register6", (user, pass, email, id) => {
       const register = backend.clientRegister(user, pass, email, db);
       expect(register).toBeTruthy();
-      expect(backend.clientLogin(user, pass, db, users, id)).toBe("valid");
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
     });
     serverSocket.on("logout", (id, user) => {
       const logout = backend.clientLogout(id, users);
@@ -909,7 +932,9 @@ describe("Test Suite for Server", () => {
   test("Register user, login and fetch the username", (done) => {
     serverSocket.on("register", (user, pass, email, id) => {
       expect(backend.clientRegister(user, pass, email, db)).toBeTruthy();
-      expect(backend.clientLogin(user, pass, db, users, id)).toBe("valid");
+      expect(backend.clientLogin(user, pass, db, users, id)).toBe(
+        "validUserDetails"
+      );
     });
     serverSocket.on("fetchUser", (id, user) => {
       var testUser = backend.getUser(id, users);
@@ -1115,7 +1140,7 @@ describe("Test Suite for Server", () => {
       expect(decryptedPassword).toBe(password);
       done();
     });
-    var encryptedPassword = aes256.encrypt("key", password);
+    var encryptedPassword = CryptoJS.AES.encrypt(password, "key").toString();
     clients.push({ id: clientSocket.id, key: "key" });
     clientSocket.emit(
       "decryptPassword",
