@@ -515,11 +515,31 @@ function getBalance(id, users) {
   if (!id || !users) return undefined;
 
   const user = users.find((user) => user.ID === id);
+
   if (user) {
     return user.balance;
   }
   return undefined;
 }
+
+
+function changeBalance(id, users, price, db) {
+  if (!id || !users) return undefined;
+
+  const user = users.find((user) => user.ID === id);
+  if (user) {
+    if (user.balance - price < 0){
+      return undefined;
+    }
+    const newbalance = user.balance = user.balance - price;   //ändrar i listan
+    const name = user.username;
+    const dbBalance = db.prepare(`UPDATE users SET balance = ? WHERE username = ?`);  //ändra i db
+    dbBalance.run(newbalance, name);
+    return user.balance;
+  }
+  return undefined;
+}
+
 
 /**
  *
@@ -598,6 +618,7 @@ exports.calculateTimeToDateSeconds = calculateTimeToDateSeconds;
 exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
 exports.getBalance = getBalance;
+exports.changeBalance = changeBalance;
 exports.decryptPassword = decryptPassword;
 exports.randomPrime = randomPrime;
 exports.getUserByEmail = getUserByEmail;

@@ -265,9 +265,18 @@ server.on("connection", (socket) => {
    */
   socket.on("getBalance", (id) => {
     var balance = backend.getBalance(id, users);
+    console.log("hallå" + balance);
     if (balance !== undefined) socket.emit("returnBalanceSuccess", balance);
     else socket.emit("returnBalanceFailure");
   });
+
+  
+  socket.on("changeBalance", (id, price) => {
+      var newbalance = backend.changeBalance(id, users, price, db);
+      if (newbalance !== undefined) socket.emit("returnUpdateSuccess", user.balance);
+      else socket.emit("returnUpdateFailure");
+    });
+
 
   let g, p;
 
