@@ -29,7 +29,7 @@ describe("Test Suite for Server", () => {
 
   beforeEach((done) => {
     const tableUsers = db.prepare(
-      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
+      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, scoreArticle INT)"
     );
     const tableQuestionsNews = db.prepare(
       "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -160,7 +160,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "loginRoot",
       "root",
-      "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653",
+      "7ce01a79235ccc49582b0c683f5ac8e257b3bc5b771702506b2058aac0514d41",
       clientSocket.id,
       users
     );
