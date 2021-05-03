@@ -16,16 +16,15 @@ var playerCount = 0;
 let interval;
 
 var backend = require("./backend");
-var app = require("express")("192.168.1.150");
+var app = require("express")("192.168.0.104");
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
 var CronJob = require("cron").CronJob;
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
-
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, balance INT)"
+  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT,balance INT)"
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -33,12 +32,6 @@ db.prepare(
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
-
-var leaderboard = backend.getTopPlayers(db);
-updateLeaderboard = () => {
-  leaderboard = backend.getTopPlayers(db);
-};
-setInterval(updateLeaderboard, 60 * 1000);
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -78,6 +71,7 @@ server.on("connection", (socket) => {
       encryptedPassword,
       socket.id
     );
+    console.log(username + " borde ha " + password + " som lösen i databasen");
     if (backend.clientRegister(username, password, email, db))
       socket.emit("registerSuccess");
     else socket.emit("registerFailure");
@@ -102,13 +96,13 @@ server.on("connection", (socket) => {
       socket.id
     );
     switch (loggedIn) {
-      case "invalid":
-        socket.emit("blankDetails");
+      case "valid":
+        socket.emit("loginSuccess");
         break;
       case "root":
         socket.emit("loginRoot");
         break;
-      case "loggedInAlready":
+      case "invalidLoggedIn":
         socket.emit("alreadyLoggedIn");
         break;
       case "validUserDetails":
@@ -118,7 +112,7 @@ server.on("connection", (socket) => {
         socket.emit("invalidUserDetails");
         break;
       default:
-        console.log("Unknown error");
+        socket.emit("loginFailure");
         break;
     }
   });
@@ -130,7 +124,7 @@ server.on("connection", (socket) => {
    * otherwise failure message
    */
   socket.on("logout", (id) => {
-    if (backend.clientLogout(id, users)) socket.emit("logoutSuccess");
+    if (backend.clientLogout(id, users) === true) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
 
@@ -181,9 +175,12 @@ server.on("connection", (socket) => {
    * the database is updated with the new question
    */
   socket.on("addQuestion", (question, answers, weekNumber) => {
+    console.log(answers);
     if (backend.addQuestionNews(question, answers, db, weekNumber)) {
+      console.log("check");
       socket.emit("addQuestionSuccess");
     } else {
+      console.log("failadeCheck");
       socket.emit("addQuestionFailure");
     }
   });
@@ -257,18 +254,6 @@ server.on("connection", (socket) => {
   });
 
   /**
-   * @summary When the user has answered all the questions in a
-   * news quiz, he/she submits the amount of answers that were
-   * correct and gets their score increased
-   */
-  socket.on("submitAnswers", (correctAnswers) => {
-    var username = backend.getUser(socket.id, users);
-    var currentScore = backend.getScore(username, db);
-    var newScore = currentScore + correctAnswers;
-    backend.updateScore(username, newScore, db);
-  });
-
-  /**
    * @summary When the socket receives a getUser signal,
    * the username is fetched from the database and
    * returned to the client socket
@@ -291,21 +276,16 @@ server.on("connection", (socket) => {
   });
 
   socket.on("changeBalance", (id, price) => {
-    var newbalance = backend.changeBalance(id, users, price, db);
-    if (newbalance !== undefined)
-      socket.emit("returnUpdateSuccess", user.balance);
-    else socket.emit("returnUpdateFailure");
+  var newbalance = backend.changeBalance(id, users, price, db);
+  if (newbalance !== undefined)
+    socket.emit("returnUpdateSuccess", user.balance);
+  else socket.emit("returnUpdateFailure");
   });
 
-  let g, p;
-  /*
-   * @summary will send the current version of the leaderboard to a requesting client
-   */
-  socket.on("getLeaderboard", () => {
-    socket.emit("updatedLB", leaderboard);
-  });
+  socket.on("updatedStateInShop", () => {
+    socket.emit("returnUpdatedStateInShop")
+  })
 
-  //TODO: document this
   socket.on("getUserByEmail", (email) => {
     var user = backend.getUserByEmail(email, db);
     if (user) socket.emit("returnUserByEmailSuccess", user);
@@ -363,6 +343,9 @@ server.on("connection", (socket) => {
     var date = quizCountdown.nextDate().toDate();
     var seconds = backend.calculateTimeToDateSeconds(date);
     socket.emit("timeLeft", backend.stringifySeconds(seconds));
+
+    //Debug
+    //console.log(backend.stringifySeconds(seconds));
   }, 1000);
 
   /**

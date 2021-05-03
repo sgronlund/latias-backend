@@ -26,7 +26,7 @@ function clientRegister(username, password, email, db) {
   if (user) return false; //If username or email is busy, return false
 
   const addUser = db.prepare(
-    "INSERT INTO users (username, password, email, score, balance) VALUES (?, ?, ?, ?,?)"
+    "INSERT INTO users (username, password, email, score, balance) VALUES (?, ?, ?, ?, ?)"
   ); //resetcode not generated yet
   addUser.run(username, password, email, 0, 0);
 
@@ -58,8 +58,9 @@ function clientLogin(username, password, db, users, id) {
     "SELECT * FROM users WHERE username = ? COLLATE NOCASE AND password = ?"
   );
   var user = checkUser.get(username, password);
-
+  console.log(user);
   if (user) {
+    console.log("tjoooooooo")
     users.push({ ID: id, username: username, balance: user.balance });
     return "validUserDetails";
   } else {
@@ -528,19 +529,18 @@ function changeBalance(id, users, price, db) {
   if (!id || !users) return undefined;
 
   const user = users.find((user) => user.ID === id);
-  if (user) {
-    if (user.balance - price < 0) {
-      return undefined;
-    }
-    const newbalance = (user.balance = user.balance - price); //ändrar i listan
-    const name = user.username;
-    const dbBalance = db.prepare(
-      `UPDATE users SET balance = ? WHERE username = ?`
-    ); //ändra i db
-    dbBalance.run(newbalance, name);
-    return user.balance;
+  if (!user|| user.balance - price < 0) {
+    return undefined;
   }
-  return undefined;
+  const name = user.username;
+  user.balance = user.balance - price; //ändrar i listan
+  const index = users.findIndex((user) => user.username === name);
+  users[index].balance = user.balance;
+  const dbBalance = db.prepare(
+    `UPDATE users SET balance = ? WHERE username = ?`
+  ); //ändra i db
+  dbBalance.run(user.balance, name);
+  return user.balance;
 }
 
 /**
