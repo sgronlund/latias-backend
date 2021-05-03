@@ -16,16 +16,15 @@ var playerCount = 0;
 let interval;
 
 var backend = require("./backend");
-var app = require("express")("192.168.1.150");
+var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
 var CronJob = require("cron").CronJob;
 
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
-
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, scoreArticle INT)"
+  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, scoreArticle INT, balance INT)"
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -105,13 +104,13 @@ server.on("connection", (socket) => {
       socket.id
     );
     switch (loggedIn) {
-      case "invalid":
-        socket.emit("blankDetails");
+      case "valid":
+        socket.emit("loginSuccess");
         break;
       case "root":
         socket.emit("loginRoot");
         break;
-      case "loggedInAlready":
+      case "invalidLoggedIn":
         socket.emit("alreadyLoggedIn");
         break;
       case "validUserDetails":
@@ -121,7 +120,7 @@ server.on("connection", (socket) => {
         socket.emit("invalidUserDetails");
         break;
       default:
-        console.log("Unknown error");
+        socket.emit("loginFailure");
         break;
     }
   });
@@ -133,7 +132,7 @@ server.on("connection", (socket) => {
    * otherwise failure message
    */
   socket.on("logout", (id) => {
-    if (backend.clientLogout(id, users)) socket.emit("logoutSuccess");
+    if (backend.clientLogout(id, users) === true) socket.emit("logoutSuccess");
     else socket.emit("logoutFailure");
   });
 
@@ -299,16 +298,28 @@ server.on("connection", (socket) => {
   });
 
   /**
-   * @summary will send the current version of the leaderboard to a requesting client
+   * @summary When the socket receives a getBalance signal,
+   * the balance is fetched from the database and
+   * returned to the client socket
    */
+  socket.on("getBalance", (id) => {
+    var balance = backend.getBalance(id, users, db);
+    if (balance !== undefined) socket.emit("returnBalanceSuccess", balance);
+    else socket.emit("returnBalanceFailure");
+  });
+  
    socket.on('getLeaderboard', (type) => {
      if(type === "newsq") socket.emit('updateLeaderboard', newsLeaderboard);
      else socket.emit('updateLeaderboard', artLeaderboard);
   });
 
-  let g,p;
+  socket.on("changeBalance", (id, price) => {
+  var newBalance = backend.changeBalance(id, users, price, db);
+  if (newBalance !== undefined)
+    socket.emit("returnUpdateSuccess", newBalance);
+  else socket.emit("returnUpdateFailure");
+  });
 
-  //TODO: document this
   socket.on("getUserByEmail", (email) => {
     var user = backend.getUserByEmail(email, db);
     if (user) socket.emit("returnUserByEmailSuccess", user);

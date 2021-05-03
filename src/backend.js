@@ -26,9 +26,9 @@ function clientRegister(username, password, email, db) {
   if (user) return false; //If username or email is busy, return false
 
   const addUser = db.prepare(
-    "INSERT INTO users (username, password, email, score, scoreArticle) VALUES (?, ?, ?, ?, ?)"
+    "INSERT INTO users (username, password, email, score, balance) VALUES (?, ?, ?, ?, ?)"
   ); //resetcode not generated yet
-  addUser.run(username, password, email, 0, 0);
+  addUser.run(username, password, email, 0, 50);
 
   return true;
 }
@@ -48,18 +48,17 @@ function clientLogin(username, password, db, users, id) {
       "7ce01a79235ccc49582b0c683f5ac8e257b3bc5b771702506b2058aac0514d41"
   ) return "root";
   for (user of users) {
-    if(user.username === username) {
+    if (user.username === username) {
       return "loggedInAlready";
     }
   }
-  
+
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? COLLATE NOCASE AND password = ?"
   );
   var user = checkUser.get(username, password);
-  
   if (user) {
-    users.push({ ID: id, username: username });
+    users.push({ ID: id, username: username, balance: user.balance });
     return "validUserDetails";
   } else {
     return "invalidUserDetails";
@@ -126,13 +125,7 @@ function addQuestionNews(question, answers, db, weekNumber) {
   const addQuestion = db.prepare(
     "INSERT INTO questions (question, wrong1, wrong2, correct, weekNumber) VALUES (?, ?, ?, ?, ?)"
   );
-  addQuestion.run(
-    question,
-    answers[0],
-    answers[1],
-    answers[2],
-    weekNumber
-  );
+  addQuestion.run(question, answers[0], answers[1], answers[2], weekNumber);
 
   return true;
 }
@@ -232,7 +225,7 @@ function checkAnswerNews(question, answer, db) {
  * @param {Database} db database to add question to
  * @returns {Boolean} true if input is correct, false if not
  */
- function addQuestionArticle(question, answers, db, weekNumber) {
+function addQuestionArticle(question, answers, db, weekNumber) {
   if (
     !question ||
     !answers ||
@@ -242,7 +235,8 @@ function checkAnswerNews(question, answer, db) {
   )
     return false;
   if (answers.length !== 4) return false;
-  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1) return false;
+  if (typeof weekNumber !== "number" || weekNumber > 52 || weekNumber < 1)
+    return false;
   const checkQuestion = db.prepare(
     "SELECT * FROM questionsArticle WHERE question = ?"
   );
@@ -286,11 +280,13 @@ function checkAnswerNews(question, answer, db) {
  *              }
  *           , {...}, {...}, ... ]}
  */
- function getQuestionsArticle(db, weekNumber) {
+function getQuestionsArticle(db, weekNumber) {
   if (!weekNumber || !db) return undefined;
   if (weekNumber > 52 || weekNumber < 1) return undefined;
 
-  const getAnswer = db.prepare("SELECT * FROM questionsArticle where weekNumber = ?");
+  const getAnswer = db.prepare(
+    "SELECT * FROM questionsArticle where weekNumber = ?"
+  );
   getAnswers = getAnswer.all(weekNumber);
 
   if (getAnswers?.length === 0) return undefined;
@@ -468,7 +464,7 @@ function checkMail(email, db) {
  */
 function calculateTimeToDateSeconds(date) {
   var now = new Date();
-  var timeToDate = date.getTime()/1000 - now.getTime()/1000;
+  var timeToDate = date.getTime() / 1000 - now.getTime() / 1000;
   return timeToDate;
 }
 
@@ -515,6 +511,33 @@ function getUser(id, users) {
   return undefined;
 }
 
+function getBalance(id, users, db) {
+  const username = getUser(id, users);
+
+  if(!username) return undefined;
+
+  const getBalance = db.prepare(
+    "SELECT balance FROM users where username = ?"
+  );
+  const balance = getBalance.get(username).balance;
+  return balance;
+}
+
+function changeBalance(id, users, price, db) {
+  const currentBalance = getBalance(id, users, db);
+  
+  if(!currentBalance || currentBalance - price < 0) return undefined;
+
+  const username = getUser(id, users);
+  const newBalance = currentBalance - price;
+  
+  const dbBalance = db.prepare(
+    `UPDATE users SET balance = ? WHERE username = ?`
+  );
+  dbBalance.run(newBalance, username);
+  return newBalance;
+}
+
 /**
  * @function
  * @summary gets the top 5 players from the database
@@ -537,7 +560,7 @@ function getUser(id, users) {
 }
 
 /**
- * 
+ *
  * @param {{id: String, sharedKey: Integer}} clients an array of connected
  * sockets and information about them
  * @param {String} encryptedPassword password to decrypt
@@ -546,15 +569,18 @@ function getUser(id, users) {
  */
 function decryptPassword(clients, encryptedPassword, id) {
   if (!clients || !encryptedPassword || !id) return undefined;
-  var CryptoJS = require("crypto-js")
+  var CryptoJS = require("crypto-js");
   var sharedKey;
   for (cli of clients) {
     if (cli.id == id) sharedKey = cli.key;
   }
   if (!sharedKey) return undefined;
   //decrypt the password using the key
-  var decryptedPassword = CryptoJS.AES.decrypt(encryptedPassword, sharedKey.toString()).toString(CryptoJS.enc.Utf8);
-  
+  var decryptedPassword = CryptoJS.AES.decrypt(
+    encryptedPassword,
+    sharedKey.toString()
+  ).toString(CryptoJS.enc.Utf8);
+
   return decryptedPassword;
 }
 
@@ -595,10 +621,8 @@ function getUserByEmail(email, db) {
  * @param {Database} db the database
  * @returns {Number} the score of the user
  */
- function getScore(username, db) {
-  const checkScore = db.prepare(
-    "SELECT score from users where username = ?"
-  )
+function getScore(username, db) {
+  const checkScore = db.prepare("SELECT score from users where username = ?");
   var score = checkScore.get(username);
   if(!score || !score.scoreArticle) return 0;
   return parseInt(score.score);
@@ -612,8 +636,8 @@ function getUserByEmail(email, db) {
 function updateScore(username, newScore, db) {
   const updateScore = db.prepare(
     "UPDATE users SET score = ? WHERE username = ?"
-  )
-  updateScore.run(newScore,username);
+  );
+  updateScore.run(newScore, username);
 }
 
 
@@ -665,6 +689,8 @@ exports.generateCode = generateCode;
 exports.calculateTimeToDateSeconds = calculateTimeToDateSeconds;
 exports.stringifySeconds = stringifySeconds;
 exports.getUser = getUser;
+exports.getBalance = getBalance;
+exports.changeBalance = changeBalance;
 exports.decryptPassword = decryptPassword;
 exports.randomPrime = randomPrime;
 exports.getUserByEmail = getUserByEmail;

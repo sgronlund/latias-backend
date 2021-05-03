@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest",
     "start": "node server.js",
+    "startdev": "nodemon server.js",
     "document": "jsdoc server.js -d ../docs/out",
     "stress_test": "npx jest tests/stresstests.test.js",
     "regular_test": "npx jest tests/simclientserver.test.js",
@@ -43,5 +44,8 @@
     "socket.io": "^4.0.1",
     "socket.io-client": "^4.0.1",
     "ws": "^7.4.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
   }
 }
