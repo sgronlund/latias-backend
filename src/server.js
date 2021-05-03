@@ -24,7 +24,7 @@ var CronJob = require("cron").CronJob;
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, balance INT)"
+  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, scoreArticle INT, balance INT)"
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -32,6 +32,15 @@ db.prepare(
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
+
+var newsLeaderboard = backend.getTopPlayersNewsQ(db);
+var artLeaderboard = backend.getTopPlayersArtQ(db);
+
+updateLeaderboards = () => {
+  newsLeaderboard = backend.getTopPlayersNewsQ(db);
+  artLeaderboard = backend.getTopPlayersArtQ(db);
+}
+setInterval(updateLeaderboards, 60*1000);
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -250,6 +259,34 @@ server.on("connection", (socket) => {
   });
 
   /**
+     * @summary When the user has answered all the questions in a 
+     * news quiz, he/she submits the amount of answers that were 
+     * correct and gets their score increased
+     */ 
+  socket.on("submitAnswers", (submittedScore) => {
+    var username = backend.getUser(socket.id, users);
+    var currentScore = backend.getScore(username, db);
+    var newScore = currentScore + submittedScore;
+    backend.updateScore(username, newScore, db);
+  })
+
+  /**
+     * @summary When the user has answered all the questions in a 
+     * news quiz, he/she submits the amount of answers that were 
+     * correct and gets their score increased
+     */ 
+   socket.on("submitAnswersArticle", (submittedScore) => {
+    var username = backend.getUser(socket.id, users);
+    var currentScore = backend.getScoreArticle(username, db);
+
+    //if currentScore is not 0, we don't want to add score again
+    if(!currentScore) {
+      var newScore = currentScore + submittedScore;
+      backend.updateScoreArticle(username, newScore, db);
+    }
+  })
+
+  /**
    * @summary When the socket receives a getUser signal,
    * the username is fetched from the database and
    * returned to the client socket
@@ -269,6 +306,11 @@ server.on("connection", (socket) => {
     var balance = backend.getBalance(id, users, db);
     if (balance !== undefined) socket.emit("returnBalanceSuccess", balance);
     else socket.emit("returnBalanceFailure");
+  });
+  
+   socket.on('getLeaderboard', (type) => {
+     if(type === "newsq") socket.emit('updateLeaderboard', newsLeaderboard);
+     else socket.emit('updateLeaderboard', artLeaderboard);
   });
 
   socket.on("changeBalance", (id, price) => {
