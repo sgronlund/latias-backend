@@ -11,7 +11,7 @@ describe("Stress testing", () => {
   beforeAll((done) => {
     db = new Database("./tests/db_for_stress_test.db");
     const table = db.prepare(
-      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
+      "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, balance INT)"
     );
     table.run();
     const httpServer = createServer(express);

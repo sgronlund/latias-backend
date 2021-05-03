@@ -58,9 +58,7 @@ function clientLogin(username, password, db, users, id) {
     "SELECT * FROM users WHERE username = ? COLLATE NOCASE AND password = ?"
   );
   var user = checkUser.get(username, password);
-  console.log(user);
   if (user) {
-    console.log("tjoooooooo")
     users.push({ ID: id, username: username, balance: user.balance });
     return "validUserDetails";
   } else {

@@ -71,7 +71,6 @@ server.on("connection", (socket) => {
       encryptedPassword,
       socket.id
     );
-    console.log(username + " borde ha " + password + " som lösen i databasen");
     if (backend.clientRegister(username, password, email, db))
       socket.emit("registerSuccess");
     else socket.emit("registerFailure");
@@ -175,12 +174,9 @@ server.on("connection", (socket) => {
    * the database is updated with the new question
    */
   socket.on("addQuestion", (question, answers, weekNumber) => {
-    console.log(answers);
     if (backend.addQuestionNews(question, answers, db, weekNumber)) {
-      console.log("check");
       socket.emit("addQuestionSuccess");
     } else {
-      console.log("failadeCheck");
       socket.emit("addQuestionFailure");
     }
   });
@@ -339,9 +335,6 @@ server.on("connection", (socket) => {
     var date = quizCountdown.nextDate().toDate();
     var seconds = backend.calculateTimeToDateSeconds(date);
     socket.emit("timeLeft", backend.stringifySeconds(seconds));
-
-    //Debug
-    //console.log(backend.stringifySeconds(seconds));
   }, 1000);
 
   /**
