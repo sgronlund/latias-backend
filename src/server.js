@@ -16,7 +16,7 @@ var playerCount = 0;
 let interval;
 
 var backend = require("./backend");
-var app = require("express")("192.168.0.104");
+var app = require("express")();
 var nodemailer = require("nodemailer");
 var bigInt = require("big-integer");
 var CronJob = require("cron").CronJob;
@@ -24,7 +24,7 @@ var CronJob = require("cron").CronJob;
 const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT,balance INT)"
+  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, balance INT)"
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -270,21 +270,17 @@ server.on("connection", (socket) => {
    * returned to the client socket
    */
   socket.on("getBalance", (id) => {
-    var balance = backend.getBalance(id, users);
+    var balance = backend.getBalance(id, users, db);
     if (balance !== undefined) socket.emit("returnBalanceSuccess", balance);
     else socket.emit("returnBalanceFailure");
   });
 
   socket.on("changeBalance", (id, price) => {
-  var newbalance = backend.changeBalance(id, users, price, db);
-  if (newbalance !== undefined)
-    socket.emit("returnUpdateSuccess", user.balance);
+  var newBalance = backend.changeBalance(id, users, price, db);
+  if (newBalance !== undefined)
+    socket.emit("returnUpdateSuccess", newBalance);
   else socket.emit("returnUpdateFailure");
   });
-
-  socket.on("updatedStateInShop", () => {
-    socket.emit("returnUpdatedStateInShop")
-  })
 
   socket.on("getUserByEmail", (email) => {
     var user = backend.getUserByEmail(email, db);

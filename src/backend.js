@@ -28,7 +28,7 @@ function clientRegister(username, password, email, db) {
   const addUser = db.prepare(
     "INSERT INTO users (username, password, email, score, balance) VALUES (?, ?, ?, ?, ?)"
   ); //resetcode not generated yet
-  addUser.run(username, password, email, 0, 0);
+  addUser.run(username, password, email, 0, 50);
 
   return true;
 }
@@ -514,33 +514,31 @@ function getUser(id, users) {
   return undefined;
 }
 
-function getBalance(id, users) {
-  if (!id || !users) return undefined;
+function getBalance(id, users, db) {
+  const username = getUser(id, users);
 
-  const user = users.find((user) => user.ID === id);
+  if(!username) return undefined;
 
-  if (user) {
-    return user.balance;
-  }
-  return undefined;
+  const getBalance = db.prepare(
+    "SELECT balance FROM users where username = ?"
+  );
+  const balance = getBalance.get(username).balance;
+  return balance;
 }
 
 function changeBalance(id, users, price, db) {
-  if (!id || !users) return undefined;
+  const currentBalance = getBalance(id, users, db);
+  
+  if(!currentBalance || currentBalance - price < 0) return undefined;
 
-  const user = users.find((user) => user.ID === id);
-  if (!user|| user.balance - price < 0) {
-    return undefined;
-  }
-  const name = user.username;
-  user.balance = user.balance - price; //ändrar i listan
-  const index = users.findIndex((user) => user.username === name);
-  users[index].balance = user.balance;
+  const username = getUser(id, users);
+  const newBalance = currentBalance - price;
+  
   const dbBalance = db.prepare(
     `UPDATE users SET balance = ? WHERE username = ?`
-  ); //ändra i db
-  dbBalance.run(user.balance, name);
-  return user.balance;
+  );
+  dbBalance.run(newBalance, username);
+  return newBalance;
 }
 
 /**
