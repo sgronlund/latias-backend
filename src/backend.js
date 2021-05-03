@@ -1,4 +1,4 @@
-/**
+  /**
  * @summary Tries to register a new username. If username or
  * email is busy, register will not be successful and function
  * will return false
@@ -45,7 +45,7 @@ function clientLogin(username, password, db, users, id) {
   if (
     username === "root" &&
     password ===
-      "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653"
+      "7ce01a79235ccc49582b0c683f5ac8e257b3bc5b771702506b2058aac0514d41"
   ) return "root";
   for (user of users) {
     if(user.username === username) {
@@ -521,8 +521,18 @@ function getUser(id, users) {
  * @param {Database} db the database
  * @returns {Array} an array of 5 users and their score
  */
- function getTopPlayers(db) {
+ function getTopPlayersNewsQ(db) {
   const users = db.prepare(`SELECT username, score FROM users ORDER BY score DESC LIMIT 5`).all();
+  return users;
+}
+/**
+ * @function
+ * @summary gets the top 5 players from the database
+ * @param {Database} db the database
+ * @returns {Array} an array of 5 users and their score
+ */
+ function getTopPlayersArtQ(db) {
+  const users = db.prepare(`SELECT username, score FROM users ORDER BY score LIMIT 5`).all();
   return users;
 }
 
@@ -632,4 +642,5 @@ exports.randomPrime = randomPrime;
 exports.getUserByEmail = getUserByEmail;
 exports.updateScore = updateScore;
 exports.getScore = getScore;
-exports.getTopPlayers = getTopPlayers;
+exports.getTopPlayersNewsQ = getTopPlayersNewsQ;
+exports.getTopPlayersArtQ = getTopPlayersArtQ;

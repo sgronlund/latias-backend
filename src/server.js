@@ -34,11 +34,14 @@ db.prepare(
   "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
 
-var leaderboard = backend.getTopPlayers(db);
-updateLeaderboard = () => {
-  leaderboard = backend.getTopPlayers(db);
+var newsLeaderboard = backend.getTopPlayersNewsQ(db);
+var artLeaderboard = backend.getTopPlayersArtQ(db);
+
+updateLeaderboards = () => {
+  newsLeaderboard = backend.getTopPlayersNewsQ(db);
+  artLeaderboard = backend.getTopPlayersArtQ(db);
 }
-setInterval(updateLeaderboard, 60*1000);
+setInterval(updateLeaderboards, 60*1000);
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -282,8 +285,15 @@ server.on("connection", (socket) => {
   /**
    * @summary will send the current version of the leaderboard to a requesting client
    */
-   socket.on('getLeaderboard', () => {
-    socket.emit('updatedLB', leaderboard);
+   socket.on('getLeaderboard', (type) => {
+    switch(type) {
+      case("newsq"): 
+        socket.emit('updateLeaderboard', newsLeaderboard);
+        break;
+      case("artq"):
+        socket.emit('updateLeaderboard', artLeaderboard);
+        break;
+    }
   });
 
   let g,p;
