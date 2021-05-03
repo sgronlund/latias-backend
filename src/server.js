@@ -25,7 +25,7 @@ const Database = require("better-sqlite3");
 const db = new Database("database.db", { verbose: console.log });
 
 db.prepare(
-  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT)"
+  "CREATE TABLE IF NOT EXISTS users (username VARCHAR(255) COLLATE NOCASE, password VARCHAR(255), email varchar(255), resetcode varchar(255), score INT, scoreArticle INT)"
 ).run();
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questions (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), correct varchar(255), weekNumber INT)"
@@ -264,11 +264,27 @@ server.on("connection", (socket) => {
      * news quiz, he/she submits the amount of answers that were 
      * correct and gets their score increased
      */ 
-  socket.on("submitAnswers", (correctAnswers) => {
+  socket.on("submitAnswers", (submittedScore) => {
     var username = backend.getUser(socket.id, users);
     var currentScore = backend.getScore(username, db);
-    var newScore = currentScore + correctAnswers;
+    var newScore = currentScore + submittedScore;
     backend.updateScore(username, newScore, db);
+  })
+
+  /**
+     * @summary When the user has answered all the questions in a 
+     * news quiz, he/she submits the amount of answers that were 
+     * correct and gets their score increased
+     */ 
+   socket.on("submitAnswersArticle", (submittedScore) => {
+    var username = backend.getUser(socket.id, users);
+    var currentScore = backend.getScoreArticle(username, db);
+
+    //if currentScore is not 0, we don't want to add score again
+    if(!currentScore) {
+      var newScore = currentScore + submittedScore;
+      backend.updateScoreArticle(username, newScore, db);
+    }
   })
 
   /**
@@ -286,14 +302,8 @@ server.on("connection", (socket) => {
    * @summary will send the current version of the leaderboard to a requesting client
    */
    socket.on('getLeaderboard', (type) => {
-    switch(type) {
-      case("newsq"): 
-        socket.emit('updateLeaderboard', newsLeaderboard);
-        break;
-      case("artq"):
-        socket.emit('updateLeaderboard', artLeaderboard);
-        break;
-    }
+     if(type === "newsq") socket.emit('updateLeaderboard', newsLeaderboard);
+     else socket.emit('updateLeaderboard', artLeaderboard);
   });
 
   let g,p;
