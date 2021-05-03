@@ -305,8 +305,6 @@ server.on("connection", (socket) => {
     socket.emit("updatedLB", leaderboard);
   });
 
-  let g, p;
-
   //TODO: document this
   socket.on("getUserByEmail", (email) => {
     var user = backend.getUserByEmail(email, db);

@@ -26,9 +26,9 @@ function clientRegister(username, password, email, db) {
   if (user) return false; //If username or email is busy, return false
 
   const addUser = db.prepare(
-    "INSERT INTO users (username, password, email, score, balance) VALUES (?, ?, ?, ?)"
+    "INSERT INTO users (username, password, email, score, balance) VALUES (?, ?, ?, ?,?)"
   ); //resetcode not generated yet
-  addUser.run(username, password, email, 0);
+  addUser.run(username, password, email, 0, 0);
 
   return true;
 }
