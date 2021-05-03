@@ -160,7 +160,7 @@ describe("Test Suite for Server", () => {
     clientSocket.emit(
       "loginRoot",
       "root",
-      "a7534ffaebea80c377ce69ae7802ee3a917fd000ae0b897932908525653f3653",
+      "7ce01a79235ccc49582b0c683f5ac8e257b3bc5b771702506b2058aac0514d41",
       clientSocket.id,
       users
     );
