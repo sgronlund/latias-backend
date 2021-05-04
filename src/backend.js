@@ -525,8 +525,8 @@ function getBalance(id, users, db) {
 
 function changeBalance(id, users, price, db) {
   const currentBalance = getBalance(id, users, db);
-  
-  if(!currentBalance || currentBalance - price < 0) return undefined;
+
+  if( (typeof currentBalance === undefined) || currentBalance - price < 0) return undefined;
 
   const username = getUser(id, users);
   const newBalance = currentBalance - price;
