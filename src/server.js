@@ -284,6 +284,7 @@ server.on("connection", (socket) => {
       var newScore = currentScore + submittedScore;
       backend.updateScoreArticle(username, newScore, db);
     }
+    socket.emit("changeScreenFinishedArtQ");
   })
 
   /**
@@ -315,9 +316,10 @@ server.on("connection", (socket) => {
 
   socket.on("changeBalance", (id, price) => {
   var newBalance = backend.changeBalance(id, users, price, db);
-  if (newBalance !== undefined)
+  if (newBalance !== undefined) {
     socket.emit("returnUpdateSuccess", newBalance);
-  else socket.emit("returnUpdateFailure");
+  }
+    else socket.emit("returnUpdateFailure");
   });
 
   socket.on("getUserByEmail", (email) => {
