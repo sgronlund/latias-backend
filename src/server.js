@@ -32,6 +32,12 @@ db.prepare(
 db.prepare(
   "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
 ).run();
+db.prepare(
+  "CREATE TABLE IF NOT EXISTS articles (name varchar(255), link varchar(255), weekNumber INT)"
+).run();
+db.prepare(
+  "CREATE TABLE IF NOT EXISTS coupons (name varchar(255), price INT)"
+).run();
 
 var newsLeaderboard = backend.getTopPlayersNewsQ(db);
 var artLeaderboard = backend.getTopPlayersArtQ(db);

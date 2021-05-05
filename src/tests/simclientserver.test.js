@@ -37,9 +37,17 @@ describe("Test Suite for Server", () => {
     const tableQuestionsArticle = db.prepare(
       "CREATE TABLE IF NOT EXISTS questionsArticle (question varchar(255), wrong1 varchar(255), wrong2 varchar(255), wrong3 varchar(255), correct varchar(255), weekNumber INT)"
     );
+    const tableArticles = db.prepare(
+      "CREATE TABLE IF NOT EXISTS articles (name varchar(255), link varchar(255), weekNumber INT)"
+    )
+    const tableCoupons = db.prepare(
+      "CREATE TABLE IF NOT EXISTS coupons (name varchar(255), price INT)"
+    )
     tableUsers.run();
     tableQuestionsNews.run();
     tableQuestionsArticle.run();
+    tableArticles.run();
+    tableCoupons.run();
     done();
   });
 
@@ -47,6 +55,8 @@ describe("Test Suite for Server", () => {
     await db.prepare("DROP TABLE IF EXISTS users").run();
     await db.prepare("DROP TABLE IF EXISTS questions").run();
     await db.prepare("DROP TABLE IF EXISTS questionsArticle").run();
+    await db.prepare("DROP TABLE IF EXISTS articles").run();
+    await db.prepare("DROP TABLE IF EXISTS coupons").run();
     users = [];
     done();
   });
@@ -705,6 +715,102 @@ describe("Test Suite for Server", () => {
       ["FALSE", "FALSE", "CORRECT"],
       1
     );
+  });
+
+  test("Add coupon with null arguments", (done) => {
+    serverSocket.on("addCouponNull", (name, price) => {
+      expect(backend.addCoupon(name, price, db)).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addCouponNull");
+  })
+
+  test("Add coupon with real arguments", (done) => {
+    serverSocket.on("addCouponReal", (name, price) => {
+      expect(backend.addCoupon(name, price, db)).toBeTruthy();
+      done();
+    });
+    clientSocket.emit("addCouponReal", "couponName", 50);
+  })
+  
+  test("Add coupon and get it from the database", (done) => {
+    serverSocket.on("addCouponAndGet", (name, price) => {
+      expect(backend.addCoupon(name, price, db)).toBeTruthy();
+      const coupon = backend.getCoupon(name, db);
+      expect(coupon).toEqual({name: name, price: 50});
+      done();
+    });
+    clientSocket.emit("addCouponAndGet", "couponName", 50);
+  });
+
+  test("Add coupon, reset coupons and check that coupon table is empty", (done) => {
+    serverSocket.on("addCouponReset", (name, price) => {
+      expect(backend.addCoupon(name, price, db)).toBeTruthy();
+      expect(backend.resetCoupons(db)).toBeTruthy();
+      const getAllCoupons = db.prepare(
+        "SELECT * FROM coupons"
+      ).get();
+      expect(getAllCoupons).toBeUndefined();
+      done();
+    });
+    clientSocket.emit("addCouponReset", "couponName", 50);
+  });
+
+  test("Add already existing coupon", (done) => {
+    serverSocket.on("addCouponDuplicate", (name, price) => {
+      expect(backend.addCoupon(name, price, db)).toBeTruthy();
+      expect(backend.addCoupon(name, price, db)).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addCouponDuplicate", "couponName", 50);
+  })
+
+  test("Add article with null arguments", (done) => {
+    serverSocket.on("addArticleNull", (name, link, weekNumber) => {
+      expect(backend.addArticle(name, link, weekNumber, db)).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addArticleNull");
+  });
+
+  test("Add article with real arguments", (done) => {
+    serverSocket.on("addArticleReal", (name, link, weekNumber) => {
+      expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
+      done();
+    });
+    clientSocket.emit("addArticleReal", "ArticleNameReal", "https://www.youtube.com", 10);
+  });
+
+  test("Add article and get it from the database", (done) => {
+    serverSocket.on("addArticleAndGet", (name, link, weekNumber) => {
+      expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
+      const article = backend.getArticle(name, db);
+      expect(article).toEqual({name: name, link: link, weekNumber: weekNumber});
+      done();
+    });
+    clientSocket.emit("addArticleAndGet", "ArticleNameReal", "https://www.youtube.com", 10);
+  });
+
+  test("Add already existing article", (done) => {
+    serverSocket.on("addArticleDuplicate", (name, link, weekNumber) => {
+      expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
+      expect(backend.addArticle(name, link, weekNumber, db)).toBeFalsy();
+      done();
+    });
+    clientSocket.emit("addArticleDuplicate", "ArticleNameReal", "https://www.youtube.com", 10);
+  });
+
+  test("Add article, reset articles for that week number and check that there are no articles with that week number", (done) => {
+    serverSocket.on("addArticleReset", (name, link, weekNumber) => {
+      expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
+      expect(backend.resetArticles(db, weekNumber)).toBeTruthy();
+      const getAllArticles = db.prepare(
+        "SELECT * FROM articles where weeknumber = ?"
+      ).get(weekNumber);
+      expect(getAllArticles).toBeUndefined();
+      done();
+    });
+    clientSocket.emit("addArticleReset", "ArticleNameReal", "https://www.youtube.com", 10);
   });
 
   test("sendMail with null arguments", (done) => {
