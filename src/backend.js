@@ -1,4 +1,4 @@
-  /**
+/**
  * @summary Tries to register a new username. If username or
  * email is busy, register will not be successful and function
  * will return false
@@ -46,7 +46,8 @@ function clientLogin(username, password, db, users, id) {
     username === "root" &&
     password ===
       "7ce01a79235ccc49582b0c683f5ac8e257b3bc5b771702506b2058aac0514d41"
-  ) return "root";
+  )
+    return "root";
   for (user of users) {
     if (user.username === username) {
       return "loggedInAlready";
@@ -114,7 +115,7 @@ function addQuestionNews(question, answers, db, weekNumber) {
   if (questionExists) return false;
 
   const checkAmount = db.prepare(
-    "SELECT * FROM questions where weekNumber = ?"
+    "SELECT * FROM questions WHERE weekNumber = ?"
   );
   amount = checkAmount.all(weekNumber);
 
@@ -144,7 +145,7 @@ function addQuestionNews(question, answers, db, weekNumber) {
 function getQuestionNews(question, db, weekNumber) {
   if (!question || !db) return undefined;
   const getAnswer = db.prepare(
-    "SELECT * FROM questions where question = ? AND weekNumber = ?"
+    "SELECT * FROM questions WHERE question = ? AND weekNumber = ?"
   );
 
   //This will return undefined if get() does not find any row, which means we don't have to check it manually
@@ -168,7 +169,7 @@ function getQuestionsNews(db, weekNumber) {
   if (!weekNumber || !db) return undefined;
   if (weekNumber > 52 || weekNumber < 1) return undefined;
 
-  const getAnswer = db.prepare("SELECT * FROM questions where weekNumber = ?");
+  const getAnswer = db.prepare("SELECT * FROM questions WHERE weekNumber = ?");
   getAnswers = getAnswer.all(weekNumber);
 
   if (getAnswers.length === 0) return undefined;
@@ -205,7 +206,7 @@ function checkAnswerNews(question, answer, db) {
   if (!question || !answer || !db) return false;
 
   const checkAnswer = db.prepare(
-    "SELECT * FROM questions where question = ? AND correct = ?"
+    "SELECT * FROM questions WHERE question = ? AND correct = ?"
   );
   var correct = checkAnswer.get(question, answer);
   if (correct) {
@@ -244,7 +245,7 @@ function addQuestionArticle(question, answers, db, weekNumber) {
 
   if (questionExists) return false;
   const checkAmount = db.prepare(
-    "SELECT * FROM questionsArticle where weekNumber = ?"
+    "SELECT * FROM questionsArticle WHERE weekNumber = ?"
   );
   amount = checkAmount.all(weekNumber);
 
@@ -285,7 +286,7 @@ function getQuestionsArticle(db, weekNumber) {
   if (weekNumber > 52 || weekNumber < 1) return undefined;
 
   const getAnswer = db.prepare(
-    "SELECT * FROM questionsArticle where weekNumber = ?"
+    "SELECT * FROM questionsArticle WHERE weekNumber = ?"
   );
   getAnswers = getAnswer.all(weekNumber);
 
@@ -323,7 +324,7 @@ function checkAnswerArticle(question, answer, db) {
   if (!question || !answer || !db) return false;
 
   const checkAnswer = db.prepare(
-    "SELECT * FROM questionsArticle where question = ? AND correct = ?"
+    "SELECT * FROM questionsArticle WHERE question = ? AND correct = ?"
   );
   var correct = checkAnswer.get(question, answer);
   if (correct) {
@@ -331,6 +332,117 @@ function checkAnswerArticle(question, answer, db) {
   } else {
     return false;
   }
+}
+
+/**
+ * @summary Adds a coupon to the database
+ * @param {String} name name of the coupon
+ * @param {Integer} price price of the coupon
+ * @param {Database} db database to add coupon to
+ * @returns {Boolean} true if coupon was successfully
+ * added, false if not
+ */
+function addCoupon(name, price, db) {
+  if (!name || !price || !db) return false;
+
+  const checkCoupon = db.prepare("SELECT * FROM coupons WHERE name = ?");
+  var couponExists = checkCoupon.get(name);
+
+  if (couponExists) return false;
+
+  const addCoupon = db.prepare(
+    "INSERT INTO coupons (name, price) VALUES (?, ?)"
+  );
+  addCoupon.run(name, price);
+
+  return true;
+}
+
+/**
+ * @summary Gets all coupons from the database
+ * @param {Database} db database to get coupon from
+ * @returns {Coupon}
+ */
+function getCoupons(db) {
+  if (!db) return undefined;
+  const getCoupons = db.prepare("SELECT * FROM coupons");
+
+  return getCoupons.all();
+}
+
+/**
+ * @summary Deletes all coupons
+ * @param {Database} db database to delete coupons from
+ */
+function resetCoupons(db) {
+  if (!db) return false;
+
+  var deleteCoupons = db.prepare("DELETE FROM coupons");
+  deleteCoupons.run();
+  return true;
+}
+
+/**
+ * @summary Adds an article to the database
+ * @param {String} name name of the article
+ * @param {String} link link to article
+ * @param {Database} db database to add article to
+ * @returns {Article} true if article was successfully
+ * added, false if not
+ */
+function addArticle(name, link, weekNumber, db) {
+  if (!name || !link || !weekNumber || !db) return false;
+
+  const checkArticle = db.prepare("SELECT * FROM articles WHERE name = ? AND weekNumber = ?");
+  var articleExists = checkArticle.get(name, weekNumber);
+
+  if (articleExists) return false;
+
+  const addArticle = db.prepare(
+    "INSERT INTO articles (name, link, weekNumber) VALUES (?, ?, ?)"
+  );
+  addArticle.run(name, link, weekNumber);
+
+  return true;
+}
+
+/**
+ * @summary Gets an article from the database given an article name
+ * @param {String} name name of article to get
+ * @param {Database} db database to get article from
+ * @returns
+ */
+function getArticle(name, db) {
+  if (!name || !db) return undefined;
+  const getArticle = db.prepare("SELECT * FROM articles WHERE name = ?");
+
+  return getArticle.get(name);
+}
+
+/**
+ * @summary Gets all articles given a weekNumber
+ * @param {Integer} weekNumber number of the week to get articles from
+ * @param {Database} db database to get articles from
+ * @returns
+ */
+ function getArticles(weekNumber, db) {
+  if (!weekNumber || !db) return undefined;
+  const getArticle = db.prepare("SELECT * FROM articles WHERE weekNumber = ?");
+
+  return getArticle.all(weekNumber);
+}
+
+/**
+ * @summary Deletes all articles for a given week
+ * @param {Database} db database to get articles from
+ * @param {Integer} weekNumber number of the week to reset
+ */
+function resetArticles(db, weekNumber) {
+  if (!db || !weekNumber) return false;
+
+  var deleteArticles = db.prepare("DELETE FROM articles WHERE weekNumber = ?");
+  deleteArticles.run(weekNumber);
+  return true;
 }
 
 /**
@@ -514,11 +626,9 @@ function getUser(id, users) {
 function getBalance(id, users, db) {
   const username = getUser(id, users);
 
-  if(!username) return undefined;
+  if (!username) return undefined;
 
-  const getBalance = db.prepare(
-    "SELECT balance FROM users where username = ?"
-  );
+  const getBalance = db.prepare("SELECT balance FROM users WHERE username = ?");
   const balance = getBalance.get(username).balance;
   return balance;
 }
@@ -526,11 +636,12 @@ function getBalance(id, users, db) {
 function changeBalance(id, users, price, db) {
   const currentBalance = getBalance(id, users, db);
 
-  if( (typeof currentBalance === undefined) || currentBalance - price < 0) return undefined;
+  if (typeof currentBalance === undefined || currentBalance - price < 0)
+    return undefined;
 
   const username = getUser(id, users);
   const newBalance = currentBalance - price;
-  
+
   const dbBalance = db.prepare(
     `UPDATE users SET balance = ? WHERE username = ?`
   );
@@ -544,8 +655,10 @@ function changeBalance(id, users, price, db) {
  * @param {Database} db the database
  * @returns {Array} an array of 5 users and their score
  */
- function getTopPlayersNewsQ(db) {
-  const users = db.prepare(`SELECT username, score FROM users ORDER BY score DESC LIMIT 5`).all();
+function getTopPlayersNewsQ(db) {
+  const users = db
+    .prepare(`SELECT username, score FROM users ORDER BY score DESC LIMIT 5`)
+    .all();
   return users;
 }
 /**
@@ -554,8 +667,12 @@ function changeBalance(id, users, price, db) {
  * @param {Database} db the database
  * @returns {Array} an array of 5 users and their score
  */
- function getTopPlayersArtQ(db) {
-  const users = db.prepare(`SELECT username, scoreArticle FROM users ORDER BY scoreArticle DESC LIMIT 5`).all();
+function getTopPlayersArtQ(db) {
+  const users = db
+    .prepare(
+      `SELECT username, scoreArticle FROM users ORDER BY scoreArticle DESC LIMIT 5`
+    )
+    .all();
   return users;
 }
 
@@ -622,9 +739,9 @@ function getUserByEmail(email, db) {
  * @returns {Number} the score of the user
  */
 function getScore(username, db) {
-  const checkScore = db.prepare("SELECT score from users where username = ?");
+  const checkScore = db.prepare("SELECT score from users WHERE username = ?");
   var score = checkScore.get(username);
-  if(!score || !score.scoreArticle) return 0;
+  if (!score || !score.scoreArticle) return 0;
   return parseInt(score.score);
 }
 /**
@@ -640,19 +757,18 @@ function updateScore(username, newScore, db) {
   updateScore.run(newScore, username);
 }
 
-
 /**
  * @summary Fetches the score from a user from the database
  * @param {String} username the user we want to get score from
  * @param {Database} db the database
  * @returns {Number} the score of the user
  */
- function getScoreArticle(username, db) {
+function getScoreArticle(username, db) {
   const checkScore = db.prepare(
-    "SELECT scoreArticle from users where username = ?"
-  )
+    "SELECT scoreArticle from users WHERE username = ?"
+  );
   var score = checkScore.get(username);
-  if(!score || !score.scoreArticle) return 0;
+  if (!score || !score.scoreArticle) return 0;
   return parseInt(score.scoreArticle);
 }
 /**
@@ -664,8 +780,8 @@ function updateScore(username, newScore, db) {
 function updateScoreArticle(username, newScore, db) {
   const updateScore = db.prepare(
     "UPDATE users SET scoreArticle = ? WHERE username = ?"
-  )
-  updateScore.run(newScore,username);
+  );
+  updateScore.run(newScore, username);
 }
 
 exports.clientLogin = clientLogin;
@@ -680,6 +796,13 @@ exports.addQuestionArticle = addQuestionArticle;
 exports.getQuestionsArticle = getQuestionsArticle;
 exports.resetQuestionsArticle = resetQuestionsArticle;
 exports.checkAnswerArticle = checkAnswerArticle;
+exports.addCoupon = addCoupon;
+exports.getCoupons = getCoupons;
+exports.resetCoupons = resetCoupons;
+exports.addArticle = addArticle;
+exports.getArticle = getArticle;
+exports.getArticles = getArticles;
+exports.resetArticles = resetArticles;
 exports.sendMail = sendMail;
 exports.checkMail = checkMail;
 exports.insertCode = insertCode;
