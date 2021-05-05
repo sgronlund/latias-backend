@@ -312,10 +312,10 @@ server.on("connection", (socket) => {
    * the article is fetched from the database and returned
    * to the client socket
    */
-  socket.on("getArticle", (name) => {
-    var getArticle = backend.getArticle(name, db);
-    if (getArticle) socket.emit("getArticleSuccess", getArticle);
-    else socket.emit("getArticleSuccess");
+  socket.on("getArticle", (weekNumber) => {
+    var getArticles = backend.getArticles(weekNumber, db);
+    if (getArticles) socket.emit("getArticleSuccess", getArticles);
+    else socket.emit("getArticleFailure");
   });
 
   /**
