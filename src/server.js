@@ -284,7 +284,7 @@ server.on("connection", (socket) => {
   socket.on("getCoupons", () => {
     var getCoupons = backend.getCoupons(db);
     if (getCoupons) socket.emit("getCouponsSuccess", getCoupons);
-    else socket.emit("getCouponsSuccess");
+    else socket.emit("getCouponsFailure");
   });
 
   /**
