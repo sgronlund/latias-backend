@@ -754,7 +754,7 @@ describe("Test Suite for Server", () => {
         expect(coupon).toEqual([
           { name: name, price: price },
           { name: name2, price: price2 },
-          { name: name3, price: price3 }
+          { name: name3, price: price3 },
         ]);
         done();
       }
