@@ -277,14 +277,14 @@ server.on("connection", (socket) => {
   });
 
   /**
-   * @summary When the socket receives a getCoupon signal,
+   * @summary When the socket receives a getCoupons signal,
    * the coupon is fetched from the database and returned
    * to the client socket
    */
-  socket.on("getCoupon", (name) => {
-    var getCoupon = backend.getCoupon(name, db);
-    if (getCoupon) socket.emit("getCouponSuccess", getCoupon);
-    else socket.emit("getCouponSuccess");
+  socket.on("getCoupons", () => {
+    var getCoupons = backend.getCoupons(db);
+    if (getCoupons) socket.emit("getCouponsSuccess", getCoupons);
+    else socket.emit("getCouponsSuccess");
   });
 
   /**

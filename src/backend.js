@@ -359,16 +359,15 @@ function addCoupon(name, price, db) {
 }
 
 /**
- * @summary Gets a coupon from the database given a coupon name
- * @param {String} name name of coupon to get
+ * @summary Gets all coupons from the database
  * @param {Database} db database to get coupon from
  * @returns {Coupon}
  */
-function getCoupon(name, db) {
-  if (!name || !db) return undefined;
-  const getCoupon = db.prepare("SELECT * FROM coupons WHERE name = ?");
+function getCoupons(db) {
+  if (!db) return undefined;
+  const getCoupons = db.prepare("SELECT * FROM coupons");
 
-  return getCoupon.get(name);
+  return getCoupons.all();
 }
 
 /**
@@ -394,8 +393,8 @@ function resetCoupons(db) {
 function addArticle(name, link, weekNumber, db) {
   if (!name || !link || !weekNumber || !db) return false;
 
-  const checkArticle = db.prepare("SELECT * FROM articles WHERE name = ?");
-  var articleExists = checkArticle.get(name);
+  const checkArticle = db.prepare("SELECT * FROM articles WHERE name = ? AND weekNumber = ?");
+  var articleExists = checkArticle.get(name, weekNumber);
 
   if (articleExists) return false;
 
@@ -418,6 +417,19 @@ function getArticle(name, db) {
   const getArticle = db.prepare("SELECT * FROM articles WHERE name = ?");
 
   return getArticle.get(name);
+}
+
+/**
+ * @summary Gets all articles given a weekNumber
+ * @param {Integer} weekNumber number of the week to get articles from
+ * @param {Database} db database to get articles from
+ * @returns
+ */
+ function getArticles(weekNumber, db) {
+  if (!weekNumber || !db) return undefined;
+  const getArticle = db.prepare("SELECT * FROM articles WHERE weekNumber = ?");
+
+  return getArticle.all(weekNumber);
 }
 
 /**
@@ -785,10 +797,11 @@ exports.getQuestionsArticle = getQuestionsArticle;
 exports.resetQuestionsArticle = resetQuestionsArticle;
 exports.checkAnswerArticle = checkAnswerArticle;
 exports.addCoupon = addCoupon;
-exports.getCoupon = getCoupon;
+exports.getCoupons = getCoupons;
 exports.resetCoupons = resetCoupons;
 exports.addArticle = addArticle;
 exports.getArticle = getArticle;
+exports.getArticles = getArticles;
 exports.resetArticles = resetArticles;
 exports.sendMail = sendMail;
 exports.checkMail = checkMail;

@@ -736,11 +736,38 @@ describe("Test Suite for Server", () => {
   test("Add coupon and get it from the database", (done) => {
     serverSocket.on("addCouponAndGet", (name, price) => {
       expect(backend.addCoupon(name, price, db)).toBeTruthy();
-      const coupon = backend.getCoupon(name, db);
-      expect(coupon).toEqual({ name: name, price: 50 });
+      const coupon = backend.getCoupons(db);
+      expect(coupon).toEqual([{ name: name, price: price }]);
       done();
     });
     clientSocket.emit("addCouponAndGet", "couponName", 50);
+  });
+
+  test("Add multiple coupons and get them from the database", (done) => {
+    serverSocket.on(
+      "addCouponAndGetMultiple",
+      (name, price, name2, price2, name3, price3) => {
+        expect(backend.addCoupon(name, price, db)).toBeTruthy();
+        expect(backend.addCoupon(name2, price2, db)).toBeTruthy();
+        expect(backend.addCoupon(name3, price3, db)).toBeTruthy();
+        const coupon = backend.getCoupons(db);
+        expect(coupon).toEqual([
+          { name: name, price: price },
+          { name: name2, price: price2 },
+          { name: name3, price: price3 }
+        ]);
+        done();
+      }
+    );
+    clientSocket.emit(
+      "addCouponAndGetMultiple",
+      "couponName",
+      faker.datatype.number({ min: 0, max: 1000 }),
+      "couponName2",
+      faker.datatype.number({ min: 0, max: 1000 }),
+      "couponName3",
+      faker.datatype.number({ min: 0, max: 1000 })
+    );
   });
 
   test("Add coupon, reset coupons and check that coupon table is empty", (done) => {
@@ -784,22 +811,61 @@ describe("Test Suite for Server", () => {
     );
   });
 
-  test("Add article and get it from the database", (done) => {
-    serverSocket.on("addArticleAndGet", (name, link, weekNumber) => {
-      expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
-      const article = backend.getArticle(name, db);
-      expect(article).toEqual({
-        name: name,
-        link: link,
-        weekNumber: weekNumber,
-      });
-      done();
-    });
+  test("Add two articles with same week number and get both from the database", (done) => {
+    serverSocket.on(
+      "addArticlesAndGet",
+      (name, link, name2, link2, weekNumber) => {
+        expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
+        expect(backend.addArticle(name2, link2, weekNumber, db)).toBeTruthy();
+        const article = backend.getArticles(weekNumber, db);
+        expect(article).toEqual([
+          {
+            name: name,
+            link: link,
+            weekNumber: weekNumber,
+          },
+          { name: name2, link: link2, weekNumber: weekNumber },
+        ]);
+        done();
+      }
+    );
     clientSocket.emit(
-      "addArticleAndGet",
+      "addArticlesAndGet",
       "ArticleNameReal",
       "https://www.youtube.com",
+      "ArticleNameReal2",
+      "https://www.google.com",
       10
+    );
+  });
+
+  test("Add articles and fetch ONLY those with a specific week number", (done) => {
+    serverSocket.on(
+      "addArticlesAndGetMultiple",
+      (name, link, name2, link2, weekNumber, weekNumber2) => {
+        expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
+        expect(backend.addArticle(name2, link2, weekNumber, db)).toBeTruthy();
+        expect(backend.addArticle(name, link, weekNumber2, db)).toBeTruthy();
+        const article = backend.getArticles(weekNumber, db);
+        expect(article).toEqual([
+          {
+            name: name,
+            link: link,
+            weekNumber: weekNumber,
+          },
+          { name: name2, link: link2, weekNumber: weekNumber },
+        ]);
+        done();
+      }
+    );
+    clientSocket.emit(
+      "addArticlesAndGetMultiple",
+      "ArticleNameReal",
+      "https://www.youtube.com",
+      "ArticleNameReal2",
+      "https://www.google.com",
+      10,
+      15
     );
   });
 
