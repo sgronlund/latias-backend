@@ -39,10 +39,10 @@ describe("Test Suite for Server", () => {
     );
     const tableArticles = db.prepare(
       "CREATE TABLE IF NOT EXISTS articles (name varchar(255), link varchar(255), weekNumber INT)"
-    )
+    );
     const tableCoupons = db.prepare(
       "CREATE TABLE IF NOT EXISTS coupons (name varchar(255), price INT)"
-    )
+    );
     tableUsers.run();
     tableQuestionsNews.run();
     tableQuestionsArticle.run();
@@ -723,7 +723,7 @@ describe("Test Suite for Server", () => {
       done();
     });
     clientSocket.emit("addCouponNull");
-  })
+  });
 
   test("Add coupon with real arguments", (done) => {
     serverSocket.on("addCouponReal", (name, price) => {
@@ -731,13 +731,13 @@ describe("Test Suite for Server", () => {
       done();
     });
     clientSocket.emit("addCouponReal", "couponName", 50);
-  })
-  
+  });
+
   test("Add coupon and get it from the database", (done) => {
     serverSocket.on("addCouponAndGet", (name, price) => {
       expect(backend.addCoupon(name, price, db)).toBeTruthy();
       const coupon = backend.getCoupon(name, db);
-      expect(coupon).toEqual({name: name, price: 50});
+      expect(coupon).toEqual({ name: name, price: 50 });
       done();
     });
     clientSocket.emit("addCouponAndGet", "couponName", 50);
@@ -747,9 +747,7 @@ describe("Test Suite for Server", () => {
     serverSocket.on("addCouponReset", (name, price) => {
       expect(backend.addCoupon(name, price, db)).toBeTruthy();
       expect(backend.resetCoupons(db)).toBeTruthy();
-      const getAllCoupons = db.prepare(
-        "SELECT * FROM coupons"
-      ).get();
+      const getAllCoupons = db.prepare("SELECT * FROM coupons").get();
       expect(getAllCoupons).toBeUndefined();
       done();
     });
@@ -763,7 +761,7 @@ describe("Test Suite for Server", () => {
       done();
     });
     clientSocket.emit("addCouponDuplicate", "couponName", 50);
-  })
+  });
 
   test("Add article with null arguments", (done) => {
     serverSocket.on("addArticleNull", (name, link, weekNumber) => {
@@ -778,17 +776,31 @@ describe("Test Suite for Server", () => {
       expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
       done();
     });
-    clientSocket.emit("addArticleReal", "ArticleNameReal", "https://www.youtube.com", 10);
+    clientSocket.emit(
+      "addArticleReal",
+      "ArticleNameReal",
+      "https://www.youtube.com",
+      10
+    );
   });
 
   test("Add article and get it from the database", (done) => {
     serverSocket.on("addArticleAndGet", (name, link, weekNumber) => {
       expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
       const article = backend.getArticle(name, db);
-      expect(article).toEqual({name: name, link: link, weekNumber: weekNumber});
+      expect(article).toEqual({
+        name: name,
+        link: link,
+        weekNumber: weekNumber,
+      });
       done();
     });
-    clientSocket.emit("addArticleAndGet", "ArticleNameReal", "https://www.youtube.com", 10);
+    clientSocket.emit(
+      "addArticleAndGet",
+      "ArticleNameReal",
+      "https://www.youtube.com",
+      10
+    );
   });
 
   test("Add already existing article", (done) => {
@@ -797,20 +809,30 @@ describe("Test Suite for Server", () => {
       expect(backend.addArticle(name, link, weekNumber, db)).toBeFalsy();
       done();
     });
-    clientSocket.emit("addArticleDuplicate", "ArticleNameReal", "https://www.youtube.com", 10);
+    clientSocket.emit(
+      "addArticleDuplicate",
+      "ArticleNameReal",
+      "https://www.youtube.com",
+      10
+    );
   });
 
   test("Add article, reset articles for that week number and check that there are no articles with that week number", (done) => {
     serverSocket.on("addArticleReset", (name, link, weekNumber) => {
       expect(backend.addArticle(name, link, weekNumber, db)).toBeTruthy();
       expect(backend.resetArticles(db, weekNumber)).toBeTruthy();
-      const getAllArticles = db.prepare(
-        "SELECT * FROM articles where weeknumber = ?"
-      ).get(weekNumber);
+      const getAllArticles = db
+        .prepare("SELECT * FROM articles where weeknumber = ?")
+        .get(weekNumber);
       expect(getAllArticles).toBeUndefined();
       done();
     });
-    clientSocket.emit("addArticleReset", "ArticleNameReal", "https://www.youtube.com", 10);
+    clientSocket.emit(
+      "addArticleReset",
+      "ArticleNameReal",
+      "https://www.youtube.com",
+      10
+    );
   });
 
   test("sendMail with null arguments", (done) => {

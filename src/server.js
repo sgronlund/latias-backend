@@ -45,8 +45,8 @@ var artLeaderboard = backend.getTopPlayersArtQ(db);
 updateLeaderboards = () => {
   newsLeaderboard = backend.getTopPlayersNewsQ(db);
   artLeaderboard = backend.getTopPlayersArtQ(db);
-}
-setInterval(updateLeaderboards, 60*1000);
+};
+setInterval(updateLeaderboards, 60 * 1000);
 
 /**
  * CORS is a mechanism which restricts us from hosting both the client and the server.
@@ -265,33 +265,95 @@ server.on("connection", (socket) => {
   });
 
   /**
-     * @summary When the user has answered all the questions in a 
-     * news quiz, he/she submits the amount of answers that were 
-     * correct and gets their score increased
-     */ 
+   * @summary When the socket receives an addCoupon signal,
+   * the database is updated with the new coupon
+   */
+  socket.on("addCoupon", (name, price) => {
+    if (backend.addCoupon(name, price, db)) {
+      socket.emit("addCouponSuccess");
+    } else {
+      socket.emit("addCouponFailure");
+    }
+  });
+
+  /**
+   * @summary When the socket receives a getCoupon signal,
+   * the coupon is fetched from the database and returned
+   * to the client socket
+   */
+  socket.on("getCoupon", (name) => {
+    var getCoupon = backend.getCoupon(name, db);
+    if (getCoupon) socket.emit("getCouponSuccess", getCoupon);
+    else socket.emit("getCouponSuccess");
+  });
+
+  /**
+   * @summary When the socket receives a resetCoupons signal,
+   * it deletes all coupons
+   */
+  socket.on("resetCoupons", () => {
+    backend.resetCoupons(db);
+  });
+
+  /**
+   * @summary When the socket receives an addArticle signal,
+   * the database is updated with the new article
+   */
+  socket.on("addArticle", (name, link, weekNumber) => {
+    if (backend.addArticle(name, link, weekNumber, db)) {
+      socket.emit("addArticleSuccess");
+    } else {
+      socket.emit("addArticleFailure");
+    }
+  });
+
+  /**
+   * @summary When the socket receives a getArticle signal,
+   * the article is fetched from the database and returned
+   * to the client socket
+   */
+  socket.on("getArticle", (name) => {
+    var getArticle = backend.getArticle(name, db);
+    if (getArticle) socket.emit("getArticleSuccess", getArticle);
+    else socket.emit("getArticleSuccess");
+  });
+
+  /**
+   * @summary When the socket receives a resetArticles signal,
+   * it deletes all articles with a given week
+   */
+  socket.on("resetArticles", (weekNumber) => {
+    backend.resetArticles(db, weekNumber);
+  });
+
+  /**
+   * @summary When the user has answered all the questions in a
+   * news quiz, he/she submits the amount of answers that were
+   * correct and gets their score increased
+   */
   socket.on("submitAnswers", (submittedScore) => {
     var username = backend.getUser(socket.id, users);
     var currentScore = backend.getScore(username, db);
     var newScore = currentScore + submittedScore;
     backend.updateScore(username, newScore, db);
-  })
+  });
 
   /**
-     * @summary When the user has answered all the questions in a 
-     * news quiz, he/she submits the amount of answers that were 
-     * correct and gets their score increased
-     */ 
-   socket.on("submitAnswersArticle", (submittedScore) => {
+   * @summary When the user has answered all the questions in a
+   * news quiz, he/she submits the amount of answers that were
+   * correct and gets their score increased
+   */
+  socket.on("submitAnswersArticle", (submittedScore) => {
     var username = backend.getUser(socket.id, users);
     var currentScore = backend.getScoreArticle(username, db);
 
     //if currentScore is not 0, we don't want to add score again
-    if(!currentScore) {
+    if (!currentScore) {
       var newScore = currentScore + submittedScore;
       backend.updateScoreArticle(username, newScore, db);
     }
     socket.emit("changeScreenFinishedArtQ");
-  })
+  });
 
   /**
    * @summary When the socket receives a getUser signal,
@@ -314,18 +376,17 @@ server.on("connection", (socket) => {
     if (balance !== undefined) socket.emit("returnBalanceSuccess", balance);
     else socket.emit("returnBalanceFailure");
   });
-  
-   socket.on('getLeaderboard', (type) => {
-     if(type === "newsq") socket.emit('updateLeaderboard', newsLeaderboard);
-     else socket.emit('updateLeaderboard', artLeaderboard);
+
+  socket.on("getLeaderboard", (type) => {
+    if (type === "newsq") socket.emit("updateLeaderboard", newsLeaderboard);
+    else socket.emit("updateLeaderboard", artLeaderboard);
   });
 
   socket.on("changeBalance", (id, price) => {
-  var newBalance = backend.changeBalance(id, users, price, db);
-  if (newBalance !== undefined) {
-    socket.emit("returnUpdateSuccess", newBalance);
-  }
-    else socket.emit("returnUpdateFailure");
+    var newBalance = backend.changeBalance(id, users, price, db);
+    if (newBalance !== undefined) {
+      socket.emit("returnUpdateSuccess", newBalance);
+    } else socket.emit("returnUpdateFailure");
   });
 
   socket.on("getUserByEmail", (email) => {
