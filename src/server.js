@@ -435,6 +435,7 @@ server.on("connection", (socket) => {
    * current player number
    */
   socket.on("quizDisconnect", () => {
+    currentlyPlaying.splice(currentlyPlaying.indexOf(socket.id));
     playerCount--;
   });
 
