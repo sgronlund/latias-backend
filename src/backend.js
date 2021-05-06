@@ -636,9 +636,8 @@ function getBalance(id, users, db) {
 function changeBalance(id, users, price, db) {
   const currentBalance = getBalance(id, users, db);
 
-  if (typeof currentBalance === undefined || currentBalance - price < 0)
+  if (currentBalance === undefined || currentBalance - price < 0)
     return undefined;
-
   const username = getUser(id, users);
   const newBalance = currentBalance - price;
 
@@ -739,6 +738,7 @@ function getUserByEmail(email, db) {
  * @returns {Number} the score of the user
  */
 function getScore(username, db) {
+  if (!username) return;
   const checkScore = db.prepare("SELECT score from users WHERE username = ?");
   var score = checkScore.get(username);
   if (!score || !score.scoreArticle) return 0;
@@ -751,6 +751,7 @@ function getScore(username, db) {
  * @param {database} db the database
  */
 function updateScore(username, newScore, db) {
+  if (!username) return;
   const updateScore = db.prepare(
     "UPDATE users SET score = ? WHERE username = ?"
   );
@@ -764,6 +765,7 @@ function updateScore(username, newScore, db) {
  * @returns {Number} the score of the user
  */
 function getScoreArticle(username, db) {
+  if (!username) return;
   const checkScore = db.prepare(
     "SELECT scoreArticle from users WHERE username = ?"
   );
@@ -778,6 +780,7 @@ function getScoreArticle(username, db) {
  * @param {database} db the database
  */
 function updateScoreArticle(username, newScore, db) {
+  if (!username) return;
   const updateScore = db.prepare(
     "UPDATE users SET scoreArticle = ? WHERE username = ?"
   );
