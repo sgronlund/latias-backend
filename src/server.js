@@ -9,6 +9,8 @@ let clients = [];
 ///Variable for checking if quiz is ready or not
 let quizOpen = false;
 
+let intervalStarted = false;
+
 ///Number of clients currently playing the article quiz
 var playerCount = 0;
 
@@ -480,9 +482,12 @@ var quizCountdown = new CronJob(
   function () {
     server.emit("quizReady");
     quizOpen = true;
-    setInterval(() => {
-      server.emit("updatePlayerCount", playerCount);
-    }, 1000);
+    if (!intervalStarted) {
+      setInterval(() => {
+        server.emit("updatePlayerCount", playerCount);
+      }, 1000);
+      intervalStarted = true;
+    }
   },
   null,
   true,

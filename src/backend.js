@@ -471,7 +471,7 @@ function sendMail(code, email, nodemailer) {
     subject: "Password Reset",
     text: `Hello!\n\nWe wanted to let you know that your password in the Real Deal has been reset.\nHere is your reset code: ${code}\nIf you did not perform this action, please reset your password in the Real Deal application.`,
   };
-
+  console.log(mailOptions)
   transporter.sendMail(mailOptions, (error, info) => {
     if (error) console.log(error);
     else console.log(info);
