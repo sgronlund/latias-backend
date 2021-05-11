@@ -17,6 +17,7 @@ var playerCount = 0;
 ///Variable for timeout interval
 let interval;
 
+var crypto = require("crypto")
 var backend = require("./backend");
 var app = require("express")();
 var nodemailer = require("nodemailer");
@@ -398,7 +399,8 @@ server.on("connection", (socket) => {
   });
 
   socket.on("startKeyExchange", () => {
-    var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+    // Random 256-bit safe prime as private key
+    var server_private_key = bigInt(80849847670595884202678082374754498319225711407016736885062419705049381543343);
     g = bigInt(backend.randomPrime());
     p = bigInt(2 * g + 1);
     var server_public_key = g.modPow(server_private_key, p);
@@ -410,13 +412,12 @@ server.on("connection", (socket) => {
     );
   });
 
-  //TODO: document this
   socket.on("clientPublic", (client_public_key) => {
-    var server_private_key = bigInt(4201337); //TODO bättre keys här. randomizeade, helst 256 bit nummer läste jag på google
+    // Random 256-bit safe prime as private key
+    var server_private_key = bigInt(80849847670595884202678082374754498319225711407016736885062419705049381543343);
     client_public_key = bigInt(client_public_key);
     var shared_key = client_public_key.modPow(server_private_key, p);
     console.log("the established key: " + shared_key);
-
     clients.push({
       id: socket.id,
       key: shared_key,
