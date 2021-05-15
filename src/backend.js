@@ -48,11 +48,8 @@ function clientLogin(username, password, db, users, id) {
       "7ce01a79235ccc49582b0c683f5ac8e257b3bc5b771702506b2058aac0514d41"
   )
     return "root";
-  for (user of users) {
-    if (user.username === username) {
-      return "loggedInAlready";
-    }
-  }
+    const index = users.findIndex((user) => user.username === username);
+    if (users[index]?.username === username) return "loggedInAlready";
 
   const checkUser = db.prepare(
     "SELECT * FROM users WHERE username = ? COLLATE NOCASE AND password = ?"
@@ -75,13 +72,10 @@ function clientLogout(id, users) {
   if (!id || !users) return false;
   /* We could use the getUser() function here but we need 
 the index for removing the user from the array */
-  for (var i = 0; i < users.length; i++) {
-    if (users[i].ID === id) {
-      users.splice(i, 1);
-      return true;
-    }
-  }
-  return false;
+const index = users.findIndex((user) => user.ID === id);
+if(index === -1) return false;
+users.splice(index, 1);
+return true;
 }
 
 /**
@@ -209,11 +203,7 @@ function checkAnswerNews(question, answer, db) {
     "SELECT * FROM questions WHERE question = ? AND correct = ?"
   );
   var correct = checkAnswer.get(question, answer);
-  if (correct) {
-    return true;
-  } else {
-    return false;
-  }
+  return correct;
 }
 
 /**
@@ -327,11 +317,7 @@ function checkAnswerArticle(question, answer, db) {
     "SELECT * FROM questionsArticle WHERE question = ? AND correct = ?"
   );
   var correct = checkAnswer.get(question, answer);
-  if (correct) {
-    return true;
-  } else {
-    return false;
-  }
+  return correct;
 }
 
 /**
@@ -528,11 +514,7 @@ function checkCode(code, email, db) {
     `SELECT * FROM users WHERE resetcode = ? AND email = ?`
   );
   var user = checkCode.get(code, email);
-  if (user) {
-    return true;
-  } else {
-    return false;
-  }
+  return(user !== undefined);
 }
 
 /**
@@ -615,12 +597,8 @@ function stringifySeconds(counter) {
 function getUser(id, users) {
   if (!id || !users) return undefined;
 
-  for (user of users) {
-    if (user.ID === id) {
-      return user.username;
-    }
-  }
-  return undefined;
+  const index = users.findIndex((user) => user.ID === id)
+  return users[index]?.username;
 }
 
 function getBalance(id, users, db) {
@@ -687,9 +665,8 @@ function decryptPassword(clients, encryptedPassword, id) {
   if (!clients || !encryptedPassword || !id) return undefined;
   var CryptoJS = require("crypto-js");
   var sharedKey;
-  for (cli of clients) {
-    if (cli.id == id) sharedKey = cli.key;
-  }
+  const index = clients.findIndex((client) => client.id === id);
+  sharedKey = clients[index].key;
   if (!sharedKey) return undefined;
   //decrypt the password using the key
   var decryptedPassword = CryptoJS.AES.decrypt(
