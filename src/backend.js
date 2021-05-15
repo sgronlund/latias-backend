@@ -58,9 +58,8 @@ function clientLogin(username, password, db, users, id) {
   if (user) {
     users.push({ ID: id, username: username, balance: user.balance });
     return "validUserDetails";
-  } else {
-    return "invalidUserDetails";
   }
+  return "invalidUserDetails";
 }
 
 /**
@@ -701,11 +700,7 @@ function getUserByEmail(email, db) {
   const user = db
     .prepare(`SELECT username FROM users WHERE email = ?`)
     .get(email).username;
-  if (user) {
-    return user;
-  } else {
-    return undefined;
-  }
+  return user;
 }
 
 /**
