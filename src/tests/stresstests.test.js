@@ -45,8 +45,6 @@ describe("Stress testing", () => {
       expect(backend.clientRegister(user, pass, email, db)).toBeTruthy();
       if (index === 1000) {
         done();
-      } else {
-        fail();
       }
     });
     for (var i = 0; i <= 1000; i++) {
