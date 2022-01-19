@@ -4,6 +4,7 @@ const backend = require("../backend");
 const faker = require("faker/locale/en_US");
 const Client = require("socket.io-client");
 const Database = require("better-sqlite3");
+const { fail } = require("assert");
 
 describe("Stress testing", () => {
   let io, serverSocket, clientSocket, db, users;
@@ -39,11 +40,13 @@ describe("Stress testing", () => {
     await clientSocket.close();
   });
 
-  test("Test register random users 10000 times", async (done) => {
+  test("Test register random users many times", async (done) => {
     serverSocket.on("stress", (user, pass, email, index) => {
       expect(backend.clientRegister(user, pass, email, db)).toBeTruthy();
       if (index === 1000) {
         done();
+      } else {
+        fail();
       }
     });
     for (var i = 0; i <= 1000; i++) {

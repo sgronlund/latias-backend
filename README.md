@@ -1,20 +1,32 @@
-# latias-backend
+**NOTE:**
+This project was done for the course [1DT003 Computer Systems with Project Work at Uppsala University](https://www.uu.se/en/admissions/freestanding-courses/course-syllabus/?kKod=1DT003&lasar=) by the following members:
 
-The frontend and all its functionality are located [here](https://github.com/sgronlund/latias-proj)
+* [AGUPTA375](https://github.com/AGUPTA375)
+* [Skrotsamlarn](https://github.com/Skrotsamlarn)
+* [RichardG99](https://github.com/RichardG99)
+* [Kimiya98901](https://github.com/Kimiya98901)
+* [JakobPaulsson](https://github.com/JakobPaulsson)
+* [niclasgardsuu](https://github.com/niclasgardsuu)
+* [sgronlund](https://github.com/sgronlund)
+---
 
-## First time
+# The Real Deal - Backend
+![logo](./src/misc/Logo_white_with_blue_border_on_color.png)
 
-When you've successfully cloned this repo, enter the src folder and run the following command :
+This repository hosts the backend of our project, *The Real Deal*, written in [Node.js](https://nodejs.org/en/) which communication with our frontend application which can be found [here](https://github.com/sgronlund/latias-proj).
+
+
+## First Time Usage
+
+When you've successfully cloned this repo, enter the `src` folder and run
 ```
-npm install
-``` 
+npm i
+```
 This installs all the dependencies this project requires.
-This process should not differ from MacOS, Linux or Windows assuming you've succesfully installed NodeJS on your host machine.
+This process should not differ from MacOS, Linux or Windows assuming you've successfully installed NodeJS on your host machine.
 
-## Client-Server session
-
-### Server
-When initiating the Client-Server session you must first start the server. To do this enter the `src`-directory and run the command:
+### Usage
+To run the application run:
 ```bash
 npm start
 ```
@@ -22,38 +34,24 @@ npm start
 If everything is working your terminal should look something like this:
 ![image](https://user-images.githubusercontent.com/55285451/113585007-eaae8c80-962b-11eb-9f0c-616a5c71464e.png)
 
-
-### Client
-
-To connect a client, enter the src folder from another terminal and simply run:
-```bash
-npm start
-```
-
-Then Expo will launch in your browser and you can choose between previewing in a browser or using a iOS/Android emulator.
-If you choose the browser your console should look something like this:
-
-![image](https://user-images.githubusercontent.com/55285451/113585858-1120f780-962d-11eb-81f5-9c4978737d20.png)
-
 ### Tests
-
-To run tests, you can simply run (after running npm install):
+To run tests, you can simply run:
 ```bash
 npm test
 ```
 
-### Docs
+### Documentation
 
-To generate documentation, you can simply run (after running npm install):
+To generate documentation, you can simply run:
 ```bash
 npm run document
 ```
 
-This will generate the src/out/ folder where index.html will contain all generated documentation.
+This will generate the `src/out/` folder where index.html will contain all generated documentation.
 
 ### Clean
 
-To clean up temporary files or files that should not be commited, simply run:
+To clean up temporary files or files that should not be committed, simply run:
 ```bash
 npm run clean
 ```
