@@ -13,7 +13,7 @@ This project was done for the course [1DT003 Computer Systems with Project Work 
 # The Real Deal - Backend
 ![logo](./src/misc/Logo_white_with_blue_border_on_color.png)
 
-This repository hosts the backend of our project, *The Real Deal*, written in [Node.js](https://nodejs.org/en/) which communication with our frontend application which can be found [here](https://github.com/sgronlund/latias-proj).
+This repository hosts the backend of our project, *The Real Deal*, written in [Node.js](https://nodejs.org/en/) which communicates with our frontend application which can be found [here](https://github.com/sgronlund/latias-proj).
 
 
 ## First Time Usage
